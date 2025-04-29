@@ -65,6 +65,7 @@ x86/
 *.csproj.MSBuildProjectExtensionResponse.binlog
 
 # Visual Studio
+.vs/
 .vscode/
 .idea/
 *.sln.iml
