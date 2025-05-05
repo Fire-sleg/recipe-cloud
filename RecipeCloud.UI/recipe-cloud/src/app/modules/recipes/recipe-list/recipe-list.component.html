@@ -1,0 +1,11 @@
+<div class="recipe-list">
+    <h2>Recipes</h2>
+    <button mat-raised-button color="primary" routerLink="/recipes/new" *ngIf="(authService.isAuthenticated$ | async)">
+      Create New Recipe
+    </button>
+    <mat-grid-list cols="3" rowHeight="400px" gutterSize="20px">
+      <mat-grid-tile *ngFor="let recipe of recipes$ | async">
+        <app-recipe-card [recipe]="recipe"></app-recipe-card>
+      </mat-grid-tile>
+    </mat-grid-list>
+  </div>
