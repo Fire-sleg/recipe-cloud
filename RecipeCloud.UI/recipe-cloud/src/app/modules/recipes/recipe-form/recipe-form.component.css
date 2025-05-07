@@ -1,0 +1,37 @@
+.recipe-form {
+    max-width: 600px;
+    margin: 20px auto;
+    padding: 20px;
+  }
+  
+  mat-card {
+    padding: 20px;
+  }
+  
+  mat-form-field {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  
+  .ingredients {
+    margin-bottom: 20px;
+  }
+  
+  .ingredients div {
+    display: flex;
+    align-items: center;
+  }
+  
+  .ingredients mat-form-field {
+    flex: 1;
+    margin-right: 10px;
+  }
+  
+  button[mat-icon-button] {
+    margin-left: 10px;
+  }
+  
+  mat-card-actions {
+    display: flex;
+    justify-content: space-between;
+  }

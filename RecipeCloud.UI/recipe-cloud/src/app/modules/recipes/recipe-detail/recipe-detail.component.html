@@ -1,0 +1,24 @@
+<div class="recipe-detail" *ngIf="recipe$ | async as recipe">
+    <mat-card>
+      <mat-card-header>
+        <mat-card-title>{{ recipe.title }}</mat-card-title>
+      </mat-card-header>
+      <img mat-card-image [src]="recipe.imageUrl || 'assets/placeholder.jpg'" alt="{{ recipe.title }}">
+      <mat-card-content>
+        <h3>Ingredients</h3>
+        <mat-list>
+          <mat-list-item *ngFor="let ingredient of recipe.ingredients">
+            {{ ingredient }}
+          </mat-list-item>
+        </mat-list>
+        <h3>Instructions</h3>
+        <p>{{ recipe.instructions }}</p>
+      </mat-card-content>
+      <mat-card-actions>
+        <button mat-button routerLink="/recipes">Back to List</button>
+        <button mat-button routerLink="/recipes/edit/{{ recipe.id }}" *ngIf="(authService.isAuthenticated$ | async)">
+          Edit Recipe
+        </button>
+      </mat-card-actions>
+    </mat-card>
+  </div>

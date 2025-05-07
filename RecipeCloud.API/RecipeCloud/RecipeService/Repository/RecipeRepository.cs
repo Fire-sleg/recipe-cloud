@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RecipeService.Data;
 using RecipeService.Models;
+using RecipeService.Models.Pagination;
 using System.Diagnostics;
 using System.Linq;
 using System.Linq.Expressions;
@@ -35,13 +36,20 @@ namespace RecipeService.Repository
             await SaveAsync();
         }
 
-        public async Task<List<Recipe>> GetAllAsync(Expression<Func<Recipe, bool>>? filter = null)
+        public async Task<List<Recipe>> GetAllAsync(Expression<Func<Recipe, bool>>? filter = null, PaginationParams paginationParams = null)
         {
             IQueryable<Recipe> query = _dbSet;
 
             if (filter != null)
             {
                 query = query.Where(filter);
+            }
+
+            if (paginationParams != null)
+            {
+                query = query
+                    .Skip((paginationParams.PageNumber - 1) * paginationParams.PageSize)
+                    .Take(paginationParams.PageSize);
             }
 
             return await query.ToListAsync();
@@ -71,6 +79,17 @@ namespace RecipeService.Repository
             await _db.SaveChangesAsync();
         }
 
-       
+        public async Task<int> CountAsync(Expression<Func<Recipe, bool>>? filter = null)
+        {
+            IQueryable<Recipe> query = _db.Recipes;
+
+            if (filter != null)
+            {
+                query = query.Where(filter);
+            }
+
+            return await query.CountAsync();
+        }
+
     }
 }

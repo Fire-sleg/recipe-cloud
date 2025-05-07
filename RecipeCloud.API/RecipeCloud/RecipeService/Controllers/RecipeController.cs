@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using RecipeService.Data;
 using RecipeService.Models;
 using RecipeService.Models.DTOs;
+using RecipeService.Models.Pagination;
 using RecipeService.Repository;
 using RecipeService.Services;
 using System.Net;
@@ -40,12 +41,19 @@ namespace RecipeService.Controllers
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<IActionResult> GetRecipesAsync()
+        public async Task<IActionResult> GetRecipesAsync([FromQuery] PaginationParams paginationParams)
         {
             try
             {
-                IEnumerable<Recipe> RecipeList = await _dbRecipe.GetAllAsync();
-                _response.Result = _mapper.Map<List<RecipeDTO>>(RecipeList);
+                var list = await _dbRecipe.GetAllAsync(null, paginationParams);
+                var recipes = _mapper.Map<List<RecipeDTO>>(list);
+
+                var totalCount = await _dbRecipe.CountAsync();
+                var pagedResponse = new PagedResponse<RecipeDTO>(recipes, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+
+
+
+                _response.Result = pagedResponse;
                 _response.StatusCode = HttpStatusCode.OK;
                 _response.IsSuccess = true;
                 return Ok(_response);

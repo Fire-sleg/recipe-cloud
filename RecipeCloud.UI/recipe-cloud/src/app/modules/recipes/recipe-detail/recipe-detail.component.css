@@ -1,0 +1,23 @@
+.recipe-detail {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 20px;
+  }
+  
+  mat-card {
+    padding: 20px;
+  }
+  
+  img {
+    max-height: 300px;
+    object-fit: cover;
+  }
+  
+  h3 {
+    margin-top: 20px;
+  }
+  
+  mat-card-actions {
+    display: flex;
+    justify-content: space-between;
+  }
