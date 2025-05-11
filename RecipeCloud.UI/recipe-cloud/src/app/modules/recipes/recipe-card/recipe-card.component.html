@@ -1,0 +1,10 @@
+<mat-card class="recipe-card">
+    <mat-card-header>
+      <mat-card-title>{{ recipe.title }}</mat-card-title>
+    </mat-card-header>
+    <img mat-card-image [src]="recipe.imageUrl || 'assets/placeholder.jpg'" alt="{{ recipe.title }}">
+
+    <mat-card-actions>
+      <button mat-button [routerLink]="['/recipes', recipe.id]">View Details</button>
+    </mat-card-actions>
+  </mat-card>

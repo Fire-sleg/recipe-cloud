@@ -1,4 +1,5 @@
 ﻿using Nest;
+using RecipeService.Models.Recipes;
 
 namespace RecipeService.Models
 {

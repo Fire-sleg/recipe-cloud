@@ -18,4 +18,5 @@ export interface Recipe {
     protein: number;
     fat: number;
     carbohydrates: number;
+    isPremium: boolean;
   }

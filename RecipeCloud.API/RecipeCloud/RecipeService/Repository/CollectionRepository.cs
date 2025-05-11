@@ -1,63 +1,57 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RecipeService.Data;
+using RecipeService.Models.Collections;
 using RecipeService.Models.Pagination;
-using RecipeService.Models.Recipes;
-using System.Diagnostics;
-using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 
 namespace RecipeService.Repository
 {
-    public class RecipeRepository : IRecipeRepository
+    public class CollectionRepository : ICollectionRepository
     {
         private readonly ApplicationDbContext _db;
-        internal DbSet<Recipe> _dbSet;
-        public RecipeRepository(ApplicationDbContext db)
+        internal DbSet<Collection> _dbSet;
+
+        public CollectionRepository(ApplicationDbContext db)
         {
             _db = db;
-            _dbSet = db.Set<Recipe>();
+            _dbSet = db.Set<Collection>();
         }
 
-        public async Task CreateAsync(Recipe entity)
+        public async Task CreateAsync(Collection entity)
         {
             await _dbSet.AddAsync(entity);
             await SaveAsync();
         }
-        public async Task<Recipe> UpdateAsync(Recipe entity)
+
+        public async Task<Collection> UpdateAsync(Collection entity)
         {
-            //entity.UpdatedDate = DateTime.Now;
             _dbSet.Update(entity);
-            await _db.SaveChangesAsync();
+            await SaveAsync();
             return entity;
         }
-        public async Task RemoveAsync(Recipe entity)
+
+        public async Task RemoveAsync(Collection entity)
         {
             _dbSet.Remove(entity);
             await SaveAsync();
         }
 
-        public async Task<List<Recipe>> GetAllAsync(Expression<Func<Recipe, bool>>? filter = null, PaginationParams paginationParams = null)
+        public async Task<List<Collection>> GetAllAsync(Expression<Func<Collection, bool>>? filter = null)
         {
-            IQueryable<Recipe> query = _dbSet;
+            IQueryable<Collection> query = _dbSet.Include(c => c.Recipes);
 
             if (filter != null)
             {
                 query = query.Where(filter);
             }
 
-            if (paginationParams != null)
-            {
-                query = query
-                    .Skip((paginationParams.PageNumber - 1) * paginationParams.PageSize)
-                    .Take(paginationParams.PageSize);
-            }
-
             return await query.ToListAsync();
         }
 
-        public async Task<Recipe> GetAsync(Expression<Func<Recipe, bool>>? filter = null, bool isTracked = true)
+        public async Task<Collection> GetAsync(Expression<Func<Collection, bool>>? filter = null, bool isTracked = true)
         {
-            IQueryable<Recipe> query = _dbSet;
+            IQueryable<Collection> query = _dbSet.Include(c => c.Recipes);
 
             if (!isTracked)
             {
@@ -72,16 +66,14 @@ namespace RecipeService.Repository
             return await query.FirstOrDefaultAsync();
         }
 
-       
-
         public async Task SaveAsync()
         {
             await _db.SaveChangesAsync();
         }
 
-        public async Task<int> CountAsync(Expression<Func<Recipe, bool>>? filter = null)
+        public async Task<int> CountAsync(Expression<Func<Collection, bool>>? filter = null)
         {
-            IQueryable<Recipe> query = _db.Recipes;
+            IQueryable<Collection> query = _dbSet;
 
             if (filter != null)
             {
@@ -90,6 +82,5 @@ namespace RecipeService.Repository
 
             return await query.CountAsync();
         }
-
     }
 }

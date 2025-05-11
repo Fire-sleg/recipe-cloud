@@ -1,6 +1,5 @@
-﻿using RecipeService.Models;
-using RecipeService.Models.DTOs;
-using RecipeService.Models.Pagination;
+﻿using RecipeService.Models.Pagination;
+using RecipeService.Models.Recipes;
 using System.Linq.Expressions;
 
 namespace RecipeService.Repository

@@ -36,8 +36,7 @@ export class RecipeFormComponent implements OnInit {
       this.recipeService.getRecipe(this.recipeId).subscribe(recipe => {
         this.recipeForm.patchValue({
           title: recipe.title,
-          imageUrl: recipe.imageUrl,
-          instructions: recipe.instructions
+          imageUrl: recipe.imageUrl
         });
         this.ingredients.clear();
         recipe.ingredients.forEach(ingredient => {
@@ -60,12 +59,13 @@ export class RecipeFormComponent implements OnInit {
   }
 
   onSubmit(): void {
+    /*
     if (this.recipeForm.valid) {
       const recipe: Recipe = this.recipeForm.value;
       let request: Observable<Recipe>;
       if (this.isEditMode && this.recipeId) {
         recipe.id = this.recipeId;
-        request = this.recipeService.updateRecipe(recipe);
+        request = this.recipeService.updateRecipe(this.recipeId,recipe);
       } else {
         request = this.recipeService.createRecipe(recipe);
       }
@@ -78,6 +78,7 @@ export class RecipeFormComponent implements OnInit {
         }
       });
     }
+      */
   }
     
 }

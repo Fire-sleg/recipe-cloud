@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace RecipeService.Models
+namespace RecipeService.Models.Recipes
 {
     public class Recipe
     {
@@ -55,5 +55,7 @@ namespace RecipeService.Models
         public double Carbohydrates { get; set; } // г
 
         public bool IsPremium { get; set; }
+
+        public List<string> Directions { get; set; } = new List<string>();
     }
 }

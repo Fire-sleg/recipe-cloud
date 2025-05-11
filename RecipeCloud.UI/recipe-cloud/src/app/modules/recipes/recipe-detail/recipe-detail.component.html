@@ -11,12 +11,10 @@
             {{ ingredient }}
           </mat-list-item>
         </mat-list>
-        <h3>Instructions</h3>
-        <p>{{ recipe.instructions }}</p>
       </mat-card-content>
       <mat-card-actions>
         <button mat-button routerLink="/recipes">Back to List</button>
-        <button mat-button routerLink="/recipes/edit/{{ recipe.id }}" *ngIf="(authService.isAuthenticated$ | async)">
+        <button mat-button routerLink="/recipes/edit/{{ recipe.id }}" *ngIf="(isAuthenticated$ | async)">
           Edit Recipe
         </button>
       </mat-card-actions>

@@ -1,6 +1,6 @@
 ﻿using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using RecipeService.Models.DTOs;
+using RecipeService.Models.Recipes.DTOs;
 
 namespace RecipeService.Validators
 {

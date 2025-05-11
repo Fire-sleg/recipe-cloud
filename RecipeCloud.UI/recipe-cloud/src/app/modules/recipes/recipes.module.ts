@@ -11,7 +11,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { RecipeListComponent } from './recipe-list/recipe-list.component';
 import { RecipeDetailComponent } from './recipe-detail/recipe-detail.component';
 import { RecipeFormComponent } from './recipe-form/recipe-form.component';
-//import { RecipeCardComponent } from './recipe-card/recipe-card.component';
+import { RecipeCardComponent } from './recipe-card/recipe-card.component';
 import { SharedModule } from '../shared/shared.module';
 import { AuthGuard } from '../../core/guards/auth.guard';
 
@@ -27,7 +27,7 @@ const routes: Routes = [
     RecipeListComponent,
     RecipeDetailComponent,
     RecipeFormComponent,
-    //RecipeCardComponent
+    RecipeCardComponent
   ],
   imports: [
     CommonModule,

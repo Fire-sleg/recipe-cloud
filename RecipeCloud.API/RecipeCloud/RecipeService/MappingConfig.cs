@@ -1,6 +1,8 @@
 ﻿using AutoMapper;
-using RecipeService.Models.DTOs;
-using RecipeService.Models;
+using RecipeService.Models.Collections;
+using RecipeService.Models.Collections.DTOs;
+using RecipeService.Models.Recipes;
+using RecipeService.Models.Recipes.DTOs;
 
 namespace RecipeService
 {
@@ -20,6 +22,10 @@ namespace RecipeService
 
             CreateMap<Recipe, RecipeCreateDTO>().ReverseMap();
             CreateMap<Recipe, RecipeUpdateDTO>().ReverseMap();
+
+            CreateMap<Collection, CollectionDTO>().ReverseMap();
+            CreateMap<Collection, CollectionCreateDTO>().ReverseMap();
+            CreateMap<Collection, CollectionUpdateDTO>().ReverseMap();
 
 
             /*

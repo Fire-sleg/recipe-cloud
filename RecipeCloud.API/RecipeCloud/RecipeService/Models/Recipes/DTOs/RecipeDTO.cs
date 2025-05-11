@@ -1,10 +1,9 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace RecipeService.Models.DTOs
+namespace RecipeService.Models.Recipes.DTOs
 {
-    public class RecipeUpdateDTO
+    public class RecipeDTO
     {
-        [Required]
         public Guid Id { get; set; }
         public string Title { get; set; }
         public string Description { get; set; }
@@ -21,5 +20,7 @@ namespace RecipeService.Models.DTOs
         public double Fat { get; set; }
         public double Carbohydrates { get; set; }
         public bool IsPremium { get; set; }
+        public List<string> Directions { get; set; } = new List<string>();
+
     }
 }
