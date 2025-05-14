@@ -7,7 +7,7 @@ namespace RecipeService.Models.Collections
     public class Collection
     {
         [Key]
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         [Required, MaxLength(100)]
         public string Title { get; set; }

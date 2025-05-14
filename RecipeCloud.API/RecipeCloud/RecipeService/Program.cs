@@ -44,13 +44,20 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql
 
 /*include repo*/
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
+builder.Services.AddScoped<IBreadcrumbRepository, BreadcrumbRepository>();
+builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
+builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
+
 builder.Services.AddScoped<IMinIOService, MinIOService>();
 
 builder.Services.AddAutoMapper(typeof(MappingConfig)); // Реєстрація AutoMapper
 builder.Services.AddAWSService<IAmazonS3>();
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddNewtonsoftJson(); 
 builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
-builder.Services.AddValidatorsFromAssemblyContaining<RecipeCreateDTOValidator>(); // Реєстрація валідаторів
+builder.Services.AddValidatorsFromAssemblyContaining<RecipeCreateDTOValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<RecipeUpdateDTOValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CollectionCreateValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<CollectionUpdateValidator>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

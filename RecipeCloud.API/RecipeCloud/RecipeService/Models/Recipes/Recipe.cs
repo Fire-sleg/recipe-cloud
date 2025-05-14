@@ -1,4 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using Newtonsoft.Json;
+using RecipeService.Models.Breadcrumbs;
+using RecipeService.Models.Categories;
+using System.ComponentModel.DataAnnotations;
 
 namespace RecipeService.Models.Recipes
 {
@@ -57,5 +60,16 @@ namespace RecipeService.Models.Recipes
         public bool IsPremium { get; set; }
 
         public List<string> Directions { get; set; } = new List<string>();
+        public int Serving { get; set; }
+
+
+
+
+        public string TransliteratedName { get; set; } = string.Empty;
+        public List<BreadcrumbItem>? BreadcrumbPath { get; set; }
+        public Guid CategoryId { get; set; }
+
+        [JsonIgnore]
+        public virtual Category? Category { get; set; }
     }
 }

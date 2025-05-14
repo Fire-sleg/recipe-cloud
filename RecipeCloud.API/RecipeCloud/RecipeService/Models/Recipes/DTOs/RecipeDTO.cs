@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using RecipeService.Models.Breadcrumbs;
+using System.ComponentModel.DataAnnotations;
 
 namespace RecipeService.Models.Recipes.DTOs
 {
@@ -21,6 +22,13 @@ namespace RecipeService.Models.Recipes.DTOs
         public double Carbohydrates { get; set; }
         public bool IsPremium { get; set; }
         public List<string> Directions { get; set; } = new List<string>();
+        public int Serving { get; set; }
+
+
+
+        public string TransliteratedName { get; set; } = string.Empty;
+        public List<BreadcrumbItem>? BreadcrumbPath { get; set; }
+        public Guid CategoryId { get; set; }
 
     }
 }

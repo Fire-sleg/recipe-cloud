@@ -42,5 +42,7 @@ namespace RecipeService.Models.Recipes.DTOs
 
         public bool IsPremium { get; set; }
         public List<string> Directions { get; set; } = new List<string>();
+        public int Serving { get; set; }
+        public Guid CategoryId { get; set; }
     }
 }

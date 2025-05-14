@@ -22,5 +22,9 @@ namespace RecipeService.Models.Recipes.DTOs
         public double Carbohydrates { get; set; }
         public bool IsPremium { get; set; }
         public List<string> Directions { get; set; } = new List<string>();
+        public int Serving { get; set; }
+
+        public string TransliteratedName { get; set; } = string.Empty;
+        public Guid CategoryId { get; set; }
     }
 }
