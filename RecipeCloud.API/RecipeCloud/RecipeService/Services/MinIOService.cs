@@ -21,6 +21,69 @@ namespace RecipeService.Services
                 configuration["MinIO:SecretKey"],
                 s3Config);
             _bucketName = configuration["MinIO:BucketName"];
+
+            EnsureBucketExistsAsync().GetAwaiter().GetResult();
+        }
+
+        private async Task EnsureBucketExistsAsync()
+        {
+            try
+            {
+                // Перевіряємо, чи існує бакет
+                var bucketExists = await Amazon.S3.Util.AmazonS3Util.DoesS3BucketExistV2Async(_s3Client, _bucketName);
+
+                if (!bucketExists)
+                {
+                    // Створюємо бакет, якщо він не існує
+                    var putBucketRequest = new PutBucketRequest
+                    {
+                        BucketName = _bucketName,
+                        UseClientRegion = true
+                    };
+
+                    await _s3Client.PutBucketAsync(putBucketRequest);
+
+                    // Налаштовуємо політику публічного доступу для читання
+                    await SetBucketPolicyAsync();
+                }
+            }
+            catch (AmazonS3Exception ex)
+            {
+                // Логуємо помилку, але не припиняємо роботу сервісу
+                Console.WriteLine($"Error creating bucket: {ex.Message}");
+                throw;
+            }
+        }
+
+        private async Task SetBucketPolicyAsync()
+        {
+            var bucketPolicy = $@"{{
+                ""Version"": ""2012-10-17"",
+                ""Statement"": [
+                    {{
+                        ""Effect"": ""Allow"",
+                        ""Principal"": ""*"",
+                        ""Action"": ""s3:GetObject"",
+                        ""Resource"": ""arn:aws:s3:::{_bucketName}/*""
+                    }}
+                ]
+            }}";
+
+            var putPolicyRequest = new PutBucketPolicyRequest
+            {
+                BucketName = _bucketName,
+                Policy = bucketPolicy
+            };
+
+            try
+            {
+                await _s3Client.PutBucketPolicyAsync(putPolicyRequest);
+            }
+            catch (AmazonS3Exception ex)
+            {
+                Console.WriteLine($"Warning: Could not set bucket policy: {ex.Message}");
+                // Не кидаємо виняток, оскільки це не критична помилка
+            }
         }
 
         public async Task<string> UploadImageAsync(IFormFile file)

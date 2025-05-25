@@ -1,0 +1,122 @@
+version: '3.8'
+
+services:
+
+  postgres-auth:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin5432
+      - POSTGRES_DB=AuthServiceDB
+    volumes:
+      - postgres-auth-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - recipecloud-network
+    restart: unless-stopped
+
+  postgres-recipe:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin5432
+      - POSTGRES_DB=RecipeCatalogDB
+    volumes:
+      - postgres-recipe-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - recipecloud-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - recipecloud-network
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=password
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000" 
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    networks:
+      - recipecloud-network
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ./AuthService
+      dockerfile: Dockerfile
+    ports:
+      - "5000:8080" 
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-auth;Port=5432;Database=AuthServiceDB;User Id=postgres;Password=admin5432;Include Error Detail=true
+    depends_on:
+      - postgres-auth 
+    networks:
+      - recipecloud-network
+    restart: unless-stopped
+
+  recipe-service:
+    build:
+      context: ./RecipeService
+      dockerfile: Dockerfile
+    ports:
+      - "5001:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres-recipe;Port=5432;Database=RecipeCatalogDB;User Id=postgres;Password=admin5432;Include Error Detail=true
+      - MinIO__ServiceURL=http://minio:9000
+      - MinIO__AccessKey=admin
+      - MinIO__SecretKey=password
+      - MinIO__BucketName=recipe-images
+    depends_on:
+      - postgres-recipe
+      - minio
+    networks:
+      - recipecloud-network
+    restart: unless-stopped
+
+  recommendation-service:
+    build:
+      context: ./RecommendationService
+      dockerfile: Dockerfile
+    ports:
+      - "5002:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ServiceUrls__UserService=http://auth-service:8080
+      - ServiceUrls__RecipeService=http://recipe-service:8080
+      - Redis__ConnectionString=redis:6379
+    depends_on:
+      - recipe-service
+      - auth-service 
+      - redis
+    networks:
+      - recipecloud-network
+    restart: unless-stopped
+
+  
+
+volumes:
+  postgres-auth-data:
+  postgres-recipe-data:
+  redis-data:
+  minio-data:
+
+networks:
+  recipecloud-network:
+    driver: bridge

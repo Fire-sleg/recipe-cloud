@@ -68,7 +68,7 @@ namespace RecipeService.Controllers
             return StatusCode(StatusCodes.Status500InternalServerError, _response);
         }
 
-        [HttpGet("{id:Guid}", Name = "GetRecipe")]
+        [HttpGet("{id:guid}", Name = "GetRecipe")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -108,7 +108,7 @@ namespace RecipeService.Controllers
 
 
         [HttpPost]
-        [Authorize(Roles = "User")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
@@ -129,7 +129,11 @@ namespace RecipeService.Controllers
                 var imageUrl = await _minIOService.UploadImageAsync(image);
                 var recipe = _mapper.Map<Recipe>(createDTO);
                 recipe.ImageUrl = imageUrl;
-                recipe.CreatedBy = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+               // recipe.CreatedBy = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                recipe.CreatedBy = Guid.Parse(User.FindFirst("ident")?.Value);
+                recipe.CreatedByUsername = User.FindFirst(ClaimTypes.Email)?.Value;
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                recipe.IsUserCreated = userRole != "Admin" && userRole != "Moderator";
 
                 await _dbRecipe.CreateAsync(recipe);
 
@@ -148,8 +152,8 @@ namespace RecipeService.Controllers
         }
 
 
-        [HttpDelete("{id:Guid}", Name = "DeleteRecipe")]
-        [Authorize(Roles = "User")]
+        [HttpDelete("{id:guid}", Name = "DeleteRecipe")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -201,8 +205,8 @@ namespace RecipeService.Controllers
             }
         }
 
-        [HttpPut("{id:Guid}", Name = "UpdateRecipe")]
-        [Authorize(Roles = "User")]
+        [HttpPut("{id:guid}", Name = "UpdateRecipe")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -275,8 +279,8 @@ namespace RecipeService.Controllers
             }
         }
 
-        [HttpPatch("{id:Guid}", Name = "UpdatePartialRecipe")]
-        [Authorize(Roles = "User")]
+        [HttpPatch("{id:guid}", Name = "UpdatePartialRecipe")]
+        [Authorize]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]

@@ -31,6 +31,7 @@ namespace RecipeService.Models.Recipes
 
         [MaxLength(50)]
         public string CreatedByUsername { get; set; } // Для відображення автора
+        public bool IsUserCreated { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

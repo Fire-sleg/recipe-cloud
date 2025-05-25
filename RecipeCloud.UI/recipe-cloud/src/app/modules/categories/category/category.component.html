@@ -1,0 +1,17 @@
+<div class="container" *ngIf="category">
+  <h2>{{ category.name }}</h2>
+
+
+
+  <div *ngIf="category.subCategories && category.subCategories.length">
+    <div *ngFor="let subCategory of category.subCategories">
+      <app-category-item [category]="subCategory"></app-category-item>
+    </div>
+
+  </div>
+
+</div>
+
+<div *ngIf="!category">
+  <p>Категорія не знайдена.</p>
+</div>

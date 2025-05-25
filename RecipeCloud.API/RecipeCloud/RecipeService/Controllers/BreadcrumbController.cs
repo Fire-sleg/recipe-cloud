@@ -23,7 +23,7 @@ namespace RecipeService.Controllers
         }
 
 
-        [HttpGet("{id:Guid}")]
+        [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetAsync(Guid id)
         {
             var model = await _dbBredcrumb.GetAsync(u => u.Id == id);
@@ -42,7 +42,7 @@ namespace RecipeService.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id:Guid}")]
+        [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
             if (id == Guid.Empty)
@@ -59,7 +59,7 @@ namespace RecipeService.Controllers
             await _dbBredcrumb.RemoveAsync(breadcrumb);
             return NoContent();
         }
-        [HttpPut("{id:Guid}", Name = "UpdateBreadcrumb")]
+        [HttpPut("{id:guid}", Name = "UpdateBreadcrumb")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateBreadcrumbAsync(Guid id, [FromBody] BreadcrumbItem updateDTO)
@@ -82,7 +82,7 @@ namespace RecipeService.Controllers
             return StatusCode(StatusCodes.Status500InternalServerError);
 
         }
-        [HttpPatch("{id:Guid}", Name = "UpdatePartialBredcrumb")]
+        [HttpPatch("{id:guid}", Name = "UpdatePartialBredcrumb")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdatePartialBredcrumbAsync(Guid id, JsonPatchDocument<BreadcrumbItem> patchDTO)

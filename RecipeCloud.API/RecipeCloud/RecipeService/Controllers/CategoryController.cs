@@ -44,7 +44,7 @@ namespace RecipeService.Controllers
 
         
 
-        [HttpGet("{id:Guid}")]
+        [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetAsync(Guid id)
         {
             var model = await _dbCategory.GetAsync(u => u.Id == id);
@@ -52,7 +52,7 @@ namespace RecipeService.Controllers
             return Ok(category);
         }
 
-        [HttpGet("{transliteratedName:string}")]
+        [HttpGet("{transliteratedName}")]
         public async Task<IActionResult> GetByTransliteratedNameAsync(string transliteratedName)
         {
             var model = await _dbCategory.GetAsync(u => u.TransliteratedName == transliteratedName);
@@ -82,7 +82,7 @@ namespace RecipeService.Controllers
             return NoContent();
         }
 
-        [HttpDelete("{id:Guid}")]
+        [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteAsync(Guid id)
         {
             if (id == Guid.Empty)
@@ -99,7 +99,7 @@ namespace RecipeService.Controllers
             await _dbCategory.RemoveAsync(category);
             return NoContent();
         }
-        [HttpPut("{id:Guid}", Name = "UpdateCategory")]
+        [HttpPut("{id:guid}", Name = "UpdateCategory")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdateCategoryAsync(Guid id, [FromBody] CategoryUpdateDTO updateDTO)
@@ -124,7 +124,7 @@ namespace RecipeService.Controllers
             return StatusCode(StatusCodes.Status500InternalServerError);
 
         }
-        [HttpPatch("{id:Guid}", Name = "UpdatePartialCategory")]
+        [HttpPatch("{id:guid}", Name = "UpdatePartialCategory")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         public async Task<IActionResult> UpdatePartialCategoryAsync(Guid id, JsonPatchDocument<CategoryUpdateDTO> patchDTO)

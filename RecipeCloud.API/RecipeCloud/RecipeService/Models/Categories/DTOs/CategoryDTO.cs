@@ -14,5 +14,7 @@ namespace RecipeService.Models.Categories.DTOs
 
         public virtual ICollection<Category>? SubCategories { get; set; }
         public virtual ICollection<Recipe>? Recipes { get; set; }
+
+        public int Order { get; set; }
     }
 }

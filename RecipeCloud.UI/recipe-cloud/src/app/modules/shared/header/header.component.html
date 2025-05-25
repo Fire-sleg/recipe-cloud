@@ -1,5 +1,5 @@
 <mat-toolbar color="primary">
-  <span>RecipeCloud</span>
+  <a class="navbar-brand" [routerLink]="['']">RecipeCloud</a>
   <div class="spacer"></div>
   <button mat-button routerLink="/recipes">Recipes</button>
   <button mat-button routerLink="/subscriptions-feed" *ngIf="isAuthenticated$ | async">Subscriptions</button>
@@ -12,3 +12,6 @@
   <button mat-button routerLink="/auth/login" *ngIf="!(isAuthenticated$ | async)">Login</button>
   <button mat-button routerLink="/auth/register" *ngIf="!(isAuthenticated$ | async)">Register</button>
 </mat-toolbar>
+
+
+

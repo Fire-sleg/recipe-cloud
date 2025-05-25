@@ -1,0 +1,8 @@
+<div *ngIf="category" style="cursor: pointer;">
+  <div (click)="navigateToSubCategory(category.transliteratedName)">
+    <h2>{{ category.name }}</h2>
+    <p><img [src]="category.imageUrl" alt="{{ category.name }}" /></p>
+</div>
+<div *ngIf="!category">
+    <p>Категорія не знайдена.</p>
+</div>

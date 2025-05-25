@@ -24,5 +24,7 @@ namespace RecipeService.Models.Categories
 
         public DateTime CreatedAt { get; set; }
         public DateTime UpdatedAt { get; set; }
+
+        public int Order { get; set; }
     }
 }

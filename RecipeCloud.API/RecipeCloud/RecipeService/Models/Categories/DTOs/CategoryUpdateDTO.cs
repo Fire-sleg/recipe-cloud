@@ -8,5 +8,6 @@
         public string ImageUrl { get; set; } = string.Empty;
         //public List<string>? BreadcrumbPath { get; set; }
         public Guid? ParentCategoryId { get; set; }
+        public int Order { get; set; }
     }
 }

@@ -62,7 +62,7 @@ namespace RecipeService.Controllers
             }
         }
 
-        [HttpGet("{id:Guid}", Name = "GetCollection")]
+        [HttpGet("{id:guid}", Name = "GetCollection")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -161,7 +161,7 @@ namespace RecipeService.Controllers
             }
         }
 
-        [HttpPut("{id:Guid}", Name = "UpdateCollection")]
+        [HttpPut("{id:guid}", Name = "UpdateCollection")]
         [Authorize(Roles = "User")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -249,7 +249,7 @@ namespace RecipeService.Controllers
             }
         }
 
-        [HttpDelete("{id:Guid}", Name = "DeleteCollection")]
+        [HttpDelete("{id:guid}", Name = "DeleteCollection")]
         [Authorize(Roles = "User")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
