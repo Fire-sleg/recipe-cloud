@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Recommendation } from '../models/recommendation.model';
+import { Recipe } from '../models/recipe.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,11 +11,14 @@ import { Recommendation } from '../models/recommendation.model';
 export class RecommendationService {
   constructor(private http: HttpClient) {}
 
-  getRecommendations(): Observable<Recommendation[]> {
-    return this.http.get<Recommendation[]>(`${environment.apiUrl}/recommendations`);
-  }
+  // getRecommendations(limit: number): Observable<Recipe[]> {
+  //   return this.http.get<Recipe[]>(`${environment.recomApiUrl}/recommendations/` + limit);
+  // }
+  getRecommendations(limit: number): Observable<Recipe[]> {
+  return this.http.get<Recipe[]>(`${environment.recomApiUrl}/recommendations`, {
+    params: { limit: limit.toString() }
+  });
+}
 
-  recordInteraction(recipeId: string, interactionType: 'View' | 'Rate' | 'Search', details?: any): Observable<void> {
-    return this.http.post<void>(`${environment.apiUrl}/interactions`, { recipeId, interactionType, details });
-  }
+
 }

@@ -9,6 +9,7 @@ using AuthService.Services;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using AuthService.Models;
+using AuthService.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,9 +31,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql
 
 
 builder.Services.AddControllers();
+
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddScoped<JWTService>();
 builder.Services.AddScoped<UserService>();
+builder.Services.AddScoped<IUserPreferencesRepository, UserPreferencesRepository>();
+builder.Services.AddScoped<IViewHistoryRepository, ViewHistoryRepository>();
 builder.Services.AddEndpointsApiExplorer();
 //builder.Services.AddSwaggerGen();
 builder.Services.AddSwaggerGen(options =>

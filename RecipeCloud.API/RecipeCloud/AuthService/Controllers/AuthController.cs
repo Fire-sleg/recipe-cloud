@@ -58,6 +58,7 @@ namespace AuthService.Controllers
             try
             {
                 var user = await _userservice.LoginUser(model);
+                //var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
                 return Ok(user);
             }
             catch (Exception ex)

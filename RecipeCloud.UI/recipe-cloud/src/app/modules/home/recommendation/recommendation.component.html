@@ -1,0 +1,140 @@
+<!-- <div class="carousel-container">
+      <h2 class="carousel-title">Рекомендовані рецепти</h2>
+
+            <div class="loading-state" *ngIf="!recommendations || !recommendations.length && !showNotFound">
+              <div class="loading-content">
+                <div class="spinner"></div>
+                <p>Завантаження рецептів...</p>
+              </div>
+            </div>
+      <div class="carousel-wrapper">
+        <button 
+          class="carousel-btn carousel-btn-prev" 
+          (click)="scrollLeft()"
+          [disabled]="currentIndex === 0"
+          aria-label="Попередні рецепти">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+
+        <div class="carousel-viewport" #viewport>
+          <div 
+            class="carousel-track" 
+            [style.transform]="'translateX(' + translateX + 'px)'"
+            [style.transition]="isAnimating ? 'transform 0.3s ease-in-out' : 'none'">
+            
+            <div 
+              *ngFor="let recipe of recommendations; trackBy: trackByRecipeId" 
+              class="carousel-slide">
+              <app-recipe-item 
+                [recipe]="recipe" 
+                class="recipe-card">
+              </app-recipe-item>
+            </div>
+
+            
+          </div>
+        </div>
+
+        <button 
+          class="carousel-btn carousel-btn-next" 
+          (click)="scrollRight()"
+          [disabled]="currentIndex >= maxIndex"
+          aria-label="Наступні рецепти">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+            <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="carousel-indicators">
+        <button
+          *ngFor="let indicator of indicators; let i = index"
+          class="indicator"
+          [class.active]="i === mathFoor(currentIndex,itemsToScroll)"
+          (click)="goToSlide(i)"
+          [attr.aria-label]="'Перейти до групи рецептів ' + (i + 1)">
+        </button>
+      </div>
+</div> -->
+
+
+<!-- HTML Template -->
+<section class="recommendations">
+  <h2>🔥 Персональні рекомендації</h2>
+  
+  <!-- Loading State -->
+  <div class="loading-state" *ngIf="!recommendations || !recommendations.length && !showNotFound">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p>Завантаження рецептів...</p>
+    </div>
+  </div>
+
+  <!-- Carousel Container -->
+  <div class="carousel-wrapper" *ngIf="recommendations && recommendations.length">
+    <button 
+      class="carousel-btn carousel-btn-prev" 
+      (click)="scrollLeft()"
+      [disabled]="currentIndex === 0"
+      aria-label="Попередні рецепти">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    <div class="carousel-viewport" #viewport>
+      <div 
+        class="carousel-track" 
+        [style.transform]="'translateX(' + translateX + 'px)'"
+        [style.transition]="isAnimating ? 'transform 0.3s ease-in-out' : 'none'">
+        
+        <div 
+          *ngFor="let recipe of recommendations; trackBy: trackByRecipeId" 
+          class="carousel-slide">
+          <div class="recipe-card" >
+            <!-- (click)="openRecipe(recipe.id)" -->
+            <div class="recipe-image">
+              <a class="text-decoration-none" [routerLink]="['/recipes','detail', recipe.transliteratedName]">
+                <img src="{{recipe.imageUrl}}" alt="{{recipe.title}}" class="img-fluid p-4 rounded-top" (error)="onImageError($event)">
+              </a>
+            </div>
+            <div class="recipe-content">
+              <h3 class="recipe-title">{{ recipe.title }}</h3>
+              <div class="recipe-meta">
+                <span><i class="bi bi-clock"></i> {{ recipe.cookingTime }}</span>
+                <span><i class="bi bi-star"></i> {{ recipe.averageRating }}</span>
+                <span><i class="bi bi-fork-knife"></i> {{ recipe.serving }} порції</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <button 
+      class="carousel-btn carousel-btn-next" 
+      (click)="scrollRight()"
+      [disabled]="currentIndex >= maxIndex"
+      aria-label="Наступні рецепти">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+    </button>
+
+    
+  </div>
+  <div class="carousel-indicators">
+        <button
+          *ngFor="let indicator of indicators; let i = index"
+          class="indicator"
+          [class.active]="i === mathFoor(currentIndex,itemsToScroll)"
+          (click)="goToSlide(i)"
+          [attr.aria-label]="'Перейти до групи рецептів ' + (i + 1)">
+        </button>
+      </div>
+
+  <!-- Carousel Indicators -->
+  
+</section>

@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace AuthService.Models
+namespace RecipeService.Models.Rating
 {
     public class RecipeRating
     {

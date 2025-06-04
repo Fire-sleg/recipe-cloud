@@ -72,5 +72,8 @@ namespace RecipeService.Models.Recipes
 
         [JsonIgnore]
         public virtual Category? Category { get; set; }
+
+        public int ViewCount { get; set; }
+        public double AverageRating { get; set; }
     }
 }

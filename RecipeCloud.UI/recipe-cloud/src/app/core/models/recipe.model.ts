@@ -1,3 +1,5 @@
+import { BreadcrumbItem } from "./breadcrumb.model";
+
 export interface Recipe {
     id: string;
     title: string;
@@ -19,4 +21,11 @@ export interface Recipe {
     fat: number;
     carbohydrates: number;
     isPremium: boolean;
+    transliteratedName: string;
+    serving: number;
+    viewCount: number;
+    averageRating: number;
+    isUserCreated: boolean;
+    directions: string[];
+    breadcrumbPath: BreadcrumbItem[] | null;
   }

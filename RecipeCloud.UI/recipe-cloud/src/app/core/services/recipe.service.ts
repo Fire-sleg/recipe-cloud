@@ -3,7 +3,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Recipe } from '../models/recipe.model';
-import { Comment } from '../models/comment.model';
+import { PagedResponse } from '../models/paged-response';
+import { CheckboxFilter } from '../models/checkboxfilter.model';
 import { Rating } from '../models/rating.model';
 
 @Injectable({
@@ -16,56 +17,93 @@ export class RecipeService {
     const params = new HttpParams()
       .set('page', page.toString())
       .set('pageSize', pageSize.toString());
-    return this.http.get<{ data: Recipe[], total: number }>(`${environment.apiUrl}/recipe`, { params });
+    return this.http.get<{ data: Recipe[], total: number }>(`${environment.apiUrl}/recipes`, { params });
+  }
+  getByTransliteratedName(transliteratedName: string){
+    return this.http.get<Recipe>(`${environment.apiUrl}/recipes/` + transliteratedName);
   }
 
   getRecipe(id: string): Observable<Recipe> {
-    return this.http.get<Recipe>(`${environment.apiUrl}/recipe/${id}`);
+    return this.http.get<Recipe>(`${environment.apiUrl}/recipes/${id}`);
   }
 
   createRecipe(recipe: FormData): Observable<Recipe> {
-    return this.http.post<Recipe>(`${environment.apiUrl}/recipe`, recipe);
+    return this.http.post<Recipe>(`${environment.apiUrl}/recipes`, recipe);
   }
 
   updateRecipe(id: string, recipe: FormData): Observable<Recipe> {
-    return this.http.put<Recipe>(`${environment.apiUrl}/recipe/${id}`, recipe);
+    return this.http.put<Recipe>(`${environment.apiUrl}/recipes/${id}`, recipe);
   }
 
   deleteRecipe(id: string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/recipe/${id}`);
+    return this.http.delete<void>(`${environment.apiUrl}/recipes/${id}`);
+  }
+  incrementViewCount(recipeId: string): Observable<any> {
+    return this.http.patch(`${environment.apiUrl}/recipes/${recipeId}/increment-views`, {});
   }
 
-  searchRecipes(query: string, filters: any): Observable<Recipe[]> {
-    let params = new HttpParams().set('query', query);
-    if (filters.diets?.length) params = params.set('diet', filters.diets.join(','));
-    if (filters.allergens?.length) params = params.set('allergens', filters.allergens.join(','));
-    if (filters.cuisine) params = params.set('cuisine', filters.cuisine);
-    if (filters.caloriesMin) params = params.set('caloriesMin', filters.caloriesMin);
-    if (filters.caloriesMax) params = params.set('caloriesMax', filters.caloriesMax);
-    if (filters.fromSubscriptions) params = params.set('fromSubscriptions', 'true');
-    return this.http.get<Recipe[]>(`${environment.apiUrl}/recipe/search`, { params });
+  rateRecipe(recipeId: string, rating: number): Observable<any> {
+    const ratingDto: Rating = {
+      recipeId,
+      rating
+    };
+    
+    return this.http.post(`${environment.apiUrl}/rating/rate`, ratingDto);
   }
 
-  getComments(recipeId: string, page: number, pageSize: number): Observable<Comment[]> {
+  getRecipeRating(recipeId: string): Observable<Rating> {
+    return this.http.get<Rating>(`${environment.apiUrl}/rating/get-rating/${recipeId}`);
+  }
+
+
+  getFilterRecipes(filters: any, pageNumber: number, pageSize: number, sortOrder: string): Observable<PagedResponse<Recipe>> {
+    const filterString = createFilterString(filters);
+    /* const filtersString = Object.entries(filters)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+        .join('&'); */
+    
     const params = new HttpParams()
-      .set('page', page.toString())
-      .set('pageSize', pageSize.toString());
-    return this.http.get<Comment[]>(`${environment.apiUrl}/recipe/${recipeId}/comments`, { params });
+      .set('filters', filterString)
+      .set('pageNumber', pageNumber.toString())
+      .set('pageSize', pageSize.toString())
+      .set('sortOrder', sortOrder);
+
+      const url = `${environment.apiUrl}/recipes/filter`;
+
+      const finalUrl = `${url}?${params.toString()}`;
+  
+      console.log('Request URL:', finalUrl); // Виведення кінцевого URL перед відправкою запиту
+
+    return this.http.get<PagedResponse<Recipe>>(`${environment.apiUrl}/recipes/filter`, { params });
   }
 
-  addComment(recipeId: string, text: string): Observable<Comment> {
-    return this.http.post<Comment>(`${environment.apiUrl}/recipe/${recipeId}/comments`, { text });
-  }
+  getCheckboxFilter(categoryId: string | null): Observable<CheckboxFilter> {
+    const params = categoryId ? new HttpParams().set('categoryId', categoryId) : undefined;
 
-  deleteComment(recipeId: string, commentId: string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/recipe/${recipeId}/comments/${commentId}`);
-  }
+    return this.http.get<CheckboxFilter>(
+      `${environment.apiUrl}/recipes/checkboxfilter`,
+      { params }
+    );
+}
 
-  addRating(recipeId: string, score: number): Observable<Rating> {
-    return this.http.post<Rating>(`${environment.apiUrl}/recipe/${recipeId}/ratings`, { score });
-  }
 
-  getAverageRating(recipeId: string): Observable<number> {
-    return this.http.get<number>(`${environment.apiUrl}/recipe/${recipeId}/ratings/average`);
+
+}
+
+// Функція для перетворення об'єкта фільтрів на рядок
+function createFilterString(filters: any): string {
+  let params = new HttpParams();
+  for (const key in filters) {
+    if (filters.hasOwnProperty(key)) {
+      const values = filters[key];
+      if (Array.isArray(values)) {
+        values.forEach(value => {
+          params = params.append(key, value);
+        });
+      } else {
+        params = params.append(key, values);
+      }
+    }
   }
+  return params.toString();
 }

@@ -13,10 +13,10 @@ export class CategoryItemComponent {
   constructor(private router: Router, private route: ActivatedRoute,) { }
 
   navigateToSubCategory(subCategoryTransliteratedName: string): void {
-      // const newPath = `category/${subCategoryTransliteratedName}`;
-      // this.router.navigateByUrl(newPath);
+      const newPath = `category/${subCategoryTransliteratedName}`;
+      this.router.navigateByUrl(newPath);
 
-      this.router.navigate([subCategoryTransliteratedName], { relativeTo: this.route });
+      // this.router.navigate([subCategoryTransliteratedName], { relativeTo: this.route });
 
     }
   

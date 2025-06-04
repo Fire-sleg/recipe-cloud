@@ -25,10 +25,7 @@ namespace AuthService.Services
                 {
                     UserName = "admin@recipecloud.com",
                     Email = "admin@recipecloud.com",
-                    Password = "AdminRecipeCloud!123",
-                    FirstName = "admin",
-                    LastName = "admin",
-                    MiddleName = "admin"
+                    Password = "AdminRecipeCloud!123"
                 };
                 var user = await _userManager.FindByEmailAsync(admin.Email);
                 if (user == null)
@@ -91,12 +88,18 @@ namespace AuthService.Services
                     throw new Exception(/*ErrorMessages.WrongPassword*/);
                 }
                 var token = await _jwtService.GenerateTokenModel(user);
-                return new UserLoginResponse(user.Id, user.UserName, token);
+
+                var roles = await _userManager.GetRolesAsync(user);
+                var role = roles.FirstOrDefault();
+
+                return new UserLoginResponse(user.Id, user.UserName, role, token);
             }
             catch (Exception)
             {
                 throw;
             }
         }
+
+
     }
 }

@@ -1,0 +1,42 @@
+<div class="category-container" *ngIf="category">
+  <div class="category-header">
+    <h2 class="category-title">{{ category.name }}</h2>
+    <div class="category-divider"></div>
+    <app-breadcrumb [category]="category"></app-breadcrumb>
+  </div>
+  
+  <div *ngIf="category.recipes && category.recipes.length">
+    <app-recipe-list [category]="category"></app-recipe-list>
+  </div>
+  <div class="not-found-container" *ngIf="(!category.recipes || !category.recipes.length) && showNotFoundRecipes">
+    <div class="not-found-content">
+      <div class="not-found-icon">📂</div>
+      <p class="not-found-text">Поки що тут немає рецептів</p>
+      <p class="not-found-subtitle">Спробуйте повернутися назад або обрати іншу категорію</p>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-state" *ngIf="!category && !showNotFoundCategory">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <p>Завантаження категорії...</p>
+  </div>
+</div>
+<!-- Loading State -->
+<div class="loading-state" *ngIf="!category && !showNotFoundRecipes">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <p>Завантаження рецептів...</p>
+  </div>
+</div>
+
+<div class="not-found-container" *ngIf="!category && showNotFoundCategory">
+  <div class="not-found-content">
+    <div class="not-found-icon">📂</div>
+    <p class="not-found-text">Категорія не знайдена або в ній немає рецептів</p>
+    <p class="not-found-subtitle">Спробуйте повернутися назад або обрати іншу категорію</p>
+  </div>
+</div>
+

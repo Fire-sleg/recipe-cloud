@@ -1,7 +1,11 @@
-﻿namespace AuthService.Models
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace AuthService.Models
 {
     public class UserPreferences
     {
+        [Key]
+        public Guid Id { get; set; } = Guid.NewGuid();
         public Guid UserId {  get; set; }
         public List<string> DietaryPreferences { get; set; } = new List<string>();
         public List<string> Allergens { get; set; } = new List<string>();

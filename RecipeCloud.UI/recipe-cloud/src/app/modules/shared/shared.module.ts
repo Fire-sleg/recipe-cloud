@@ -7,11 +7,13 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { RouterModule } from '@angular/router';
 import { HeaderComponent } from './header/header.component';
 import { FooterComponent } from './footer/footer.component';
+import { BreadcrumbComponent } from './breadcrumb/breadcrumb.component';
 
 @NgModule({
   declarations: [
     HeaderComponent,
-    FooterComponent
+    FooterComponent,
+    BreadcrumbComponent
   ],
   imports: [
     CommonModule,
@@ -22,6 +24,7 @@ import { FooterComponent } from './footer/footer.component';
     RouterModule
   ],
   exports: [
+    BreadcrumbComponent,
     HeaderComponent,
     FooterComponent,
     CommonModule,

@@ -1,0 +1,43 @@
+<!-- 
+<div class="card h-100 shodow-sm" *ngIf="recipe"  >
+    <a class="text-decoration-none" [routerLink]="['/recipes','detail', recipe.transliteratedName]">
+        <img src="{{recipe.imageUrl}}" alt="{{recipe.title}}"  class="img-fluid  p-4">
+    </a>
+
+    <div class="card-body d-flex flex-column">
+        <a [routerLink]="['/recipes','detail', recipe.transliteratedName]" class="text-decoration-none">
+            <h6 class="text-uppercase">
+                {{recipe.title}}
+            </h6>
+        </a>
+
+        <div class="btn-group mt-auto">
+            <button [routerLink]="['/recipes','detail', recipe.transliteratedName]" class="btn btn-outline-secondary">View</button>
+        </div>
+
+      
+    </div>
+</div> -->
+
+
+<div class="card h-100 shadow-sm bg-white border-0" *ngIf="recipe" style="box-shadow: 0 2px 8px rgba(245, 245, 220, 0.3);">
+    <a class="text-decoration-none" [routerLink]="['/recipes','detail', recipe.transliteratedName]">
+        <img src="{{recipe.imageUrl}}" alt="{{recipe.title}}" class="img-fluid p-4 rounded-top" (error)="onImageError($event)">
+    </a>
+
+    <div class="card-body d-flex flex-column bg-white">
+        <a [routerLink]="['/recipes','detail', recipe.transliteratedName]" class="text-decoration-none">
+            <h6 class="text-uppercase text-dark fw-bold mb-3">
+                {{recipe.title}}
+            </h6>
+        </a>
+
+        <div class="btn-group mt-auto">
+            <button [routerLink]="['/recipes','detail', recipe.transliteratedName]" 
+                    class="btn btn-outline-dark border-2 text-dark bg-white hover-bg-beige"
+                    style="transition: all 0.3s ease;">
+                Переглянути
+            </button>
+        </div>
+    </div>
+</div>

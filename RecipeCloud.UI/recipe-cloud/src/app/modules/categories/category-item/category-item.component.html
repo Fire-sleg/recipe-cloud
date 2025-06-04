@@ -1,8 +1,29 @@
-<div *ngIf="category" style="cursor: pointer;">
+<!-- <div *ngIf="category" style="cursor: pointer;">
   <div (click)="navigateToSubCategory(category.transliteratedName)">
     <h2>{{ category.name }}</h2>
-    <p><img [src]="category.imageUrl" alt="{{ category.name }}" /></p>
 </div>
 <div *ngIf="!category">
     <p>Категорія не знайдена.</p>
+</div> -->
+<div class="category-item" *ngIf="category">
+  <div class="category-card" (click)="navigateToSubCategory(category.transliteratedName)">
+    <div class="card-content">
+      <div class="category-icon">
+        <svg width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M10 4H4c-1.11 0-2 .89-2 2v3h2V6h4V4zm6 0v2h4v3h2V6c0-1.11-.89-2-2-2h-4zm-6 15v-2H6v-3H4v3c0 1.11.89 2 2 2h4zm6 0h4c1.11 0 2-.89 2-2v-3h-2v3h-4v2z"/>
+        </svg>
+      </div>
+      <h3 class="category-name">{{ category.name }}</h3>
+      <div class="category-arrow">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+          <path d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </div>
+    </div>
+    <div class="card-hover-effect"></div>
+  </div>
+</div>
+
+<div class="category-item-not-found" *ngIf="!category">
+  <p class="item-not-found-text">Категорія не знайдена</p>
 </div>

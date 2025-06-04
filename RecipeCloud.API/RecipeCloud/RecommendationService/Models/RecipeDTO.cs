@@ -25,9 +25,14 @@ namespace RecommendationService.Models
 
 
 
+
         public string TransliteratedName { get; set; } = string.Empty;
         public List<BreadcrumbItem>? BreadcrumbPath { get; set; }
         public Guid CategoryId { get; set; }
+        public bool IsUserCreated { get; set; }
+
+        public int ViewCount { get; set; }
+        public double AverageRating { get; set; }
 
     }
 }

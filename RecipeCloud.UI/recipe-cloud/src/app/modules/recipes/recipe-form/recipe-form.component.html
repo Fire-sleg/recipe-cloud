@@ -1,63 +1,394 @@
-<div class="recipe-form">
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>{{ isEditMode ? 'Edit Recipe' : 'Create Recipe' }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()">
-          <mat-form-field appearance="outline">
-            <mat-label>Title</mat-label>
-            <input matInput formControlName="title" required>
-            <mat-error *ngIf="recipeForm.get('title')?.hasError('required')">
-              Title is required
-            </mat-error>
-            <mat-error *ngIf="recipeForm.get('title')?.hasError('minlength')">
-              Title must be at least 3 characters
-            </mat-error>
-          </mat-form-field>
-  
-          <mat-form-field appearance="outline">
-            <mat-label>Image URL</mat-label>
-            <input matInput formControlName="imageUrl">
-          </mat-form-field>
-  
-          <div class="ingredients">
-            <h3>Ingredients</h3>
-            <div formArrayName="ingredients">
-              <div *ngFor="let ingredient of ingredients.controls; let i = index">
-                <mat-form-field appearance="outline">
-                  <mat-label>Ingredient {{ i + 1 }}</mat-label>
-                  <input matInput [formControlName]="i" required>
-                  <mat-error *ngIf="ingredient.hasError('required')">
-                    Ingredient is required
-                  </mat-error>
-                </mat-form-field>
-                <button mat-icon-button (click)="removeIngredient(i)" *ngIf="ingredients.length > 1">
-                  <mat-icon>remove</mat-icon>
-                </button>
-              </div>
-            </div>
-            <button mat-button type="button" (click)="addIngredient()">Add Ingredient</button>
+<!-- Create Recipe Button -->
+<div class="create-recipe-section" *ngIf="isAuthenticated">
+  <button 
+    type="button" 
+    class="btn btn-create-recipe" 
+    (click)="showCreateForm()"
+    *ngIf="!showForm">
+    <i class="fas fa-plus"></i>
+    Створити рецепт
+  </button>
+</div>
+
+<!-- Create Recipe Form Modal -->
+<div class="recipe-form-overlay" *ngIf="showForm" (click)="hideCreateForm()">
+  <div class="recipe-form-container" (click)="$event.stopPropagation()">
+    <div class="recipe-form-header">
+      <h2>Створити новий рецепт</h2>
+      <button type="button" class="btn-close" (click)="hideCreateForm()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="recipeForm" (ngSubmit)="onSubmit()" class="recipe-form">
+      <!-- Basic Information -->
+      <div class="form-section">
+        <h3>Основна інформація</h3>
+        
+        <div class="form-group">
+          <label for="title">Назва рецепту *</label>
+          <input 
+            type="text" 
+            id="title" 
+            formControlName="title" 
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('title')"
+            placeholder="Введіть назву рецепту">
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('title')">
+            {{ getFieldError('title') }}
           </div>
-  
-          <mat-form-field appearance="outline">
-            <mat-label>Instructions</mat-label>
-            <textarea matInput formControlName="instructions" rows="5" required></textarea>
-            <mat-error *ngIf="recipeForm.get('instructions')?.hasError('required')">
-              Instructions are required
-            </mat-error>
-            <mat-error *ngIf="recipeForm.get('instructions')?.hasError('minlength')">
-              Instructions must be at least 10 characters
-            </mat-error>
-          </mat-form-field>
-  
-          <mat-card-actions>
-            <button mat-raised-button color="primary" type="submit" [disabled]="recipeForm.invalid">
-              {{ isEditMode ? 'Update' : 'Create' }}
+        </div>
+
+        <div class="form-group">
+          <label for="description">Опис *</label>
+          <textarea 
+            id="description" 
+            formControlName="description" 
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('description')"
+            rows="3"
+            placeholder="Опишіть ваш рецепт..."></textarea>
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('description')">
+            {{ getFieldError('description') }}
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label>Категорія</label>
+            <div class="category-display" *ngIf="category">{{ category.name }}</div>
+            <div class="category-display" *ngIf="!category">Не вибрано</div>
+          </div>
+
+          <div class="form-group">
+            <label for="difficulty">Складність</label>
+            <select id="difficulty" formControlName="difficulty" class="form-control">
+              <option value="Easy">Легко</option>
+              <option value="Medium">Середньо</option>
+              <option value="Hard">Складно</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cookingTime">Час приготування (хв) *</label>
+            <input 
+              type="number" 
+              id="cookingTime" 
+              formControlName="cookingTime" 
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('cookingTime')"
+              min="1">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('cookingTime')">
+              {{ getFieldError('cookingTime') }}
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="servings">Кількість порцій *</label>
+            <input 
+              type="number" 
+              id="servings" 
+              formControlName="servings" 
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('servings')"
+              min="1">
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('servings')">
+              {{ getFieldError('servings') }}
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Зображення рецепту</label>
+          
+          <!-- File Upload Area -->
+          <div class="file-upload-area" 
+              (dragover)="onFileDragOver($event)"
+              (dragleave)="onFileDragLeave($event)"
+              (drop)="onFileDropped($event)"
+              [class.dragover]="false">
+            
+            <!-- Upload Zone -->
+            <div class="upload-zone" *ngIf="!filePreviewUrl">
+              <i class="fas fa-cloud-upload-alt upload-icon"></i>
+              <p class="upload-text">Перетягніть файл сюди або</p>
+              <label for="recipeImage" class="btn btn-upload">
+                <i class="fas fa-plus"></i>
+                Оберіть файл
+              </label>
+              <input 
+                type="file" 
+                id="recipeImage" 
+                accept="image/jpeg,image/jpg,image/png,image/gif"
+                (change)="onFileSelected($event)"
+                class="file-input">
+              <p class="upload-hint">JPG, PNG, GIF до 5MB</p>
+            </div>
+
+            <!-- File Preview -->
+            <div class="file-preview" *ngIf="filePreviewUrl">
+              <div class="preview-image-container">
+                <img [src]="filePreviewUrl" alt="Recipe preview" class="preview-image">
+                <div class="preview-overlay">
+                  <div class="preview-info">
+                    <i class="fas fa-image"></i>
+                    <span class="file-name">{{ selectedFile?.name }}</span>
+                    <span class="file-size">{{ formatFileSize(selectedFile?.size || 0) }}</span>
+                  </div>
+                </div>
+              </div>
+              <button type="button" class="btn btn-remove-file" (click)="removeFile()">
+                <i class="fas fa-trash"></i>
+                Видалити
+              </button>
+            </div>
+
+            <!-- Error Message -->
+            <div class="file-error" *ngIf="fileError">
+              <i class="fas fa-exclamation-triangle"></i>
+              {{ fileError }}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Nutritional Information -->
+      <div class="form-section">
+        <h3>Харчова цінність (на порцію)</h3>
+        
+        <div class="form-row">
+          <div class="form-group">
+            <label for="calories">Калорії</label>
+            <input type="number" id="calories" formControlName="calories" class="form-control" min="0">
+          </div>
+
+          <div class="form-group">
+            <label for="protein">Білки (г)</label>
+            <input type="number" id="protein" formControlName="protein" class="form-control" min="0" step="0.1">
+          </div>
+
+          <div class="form-group">
+            <label for="carbohydrates">Вуглеводи (г)</label>
+            <input type="number" id="carbohydrates" formControlName="carbohydrates" class="form-control" min="0" step="0.1">
+          </div>
+
+          <div class="form-group">
+            <label for="fat">Жири (г)</label>
+            <input type="number" id="fat" formControlName="fat" class="form-control" min="0" step="0.1">
+          </div>
+        </div>
+      </div>
+
+      <!-- Ingredients -->
+      <div class="form-section">
+        <h3>Інгредієнти</h3>
+        
+        <div formArrayName="ingredients">
+          <div *ngFor="let ingredient of ingredients.controls; let i = index" 
+               [formGroupName]="i" 
+               class="ingredient-row">
+            <div class="form-row">
+              <div class="form-group">
+                <input 
+                  type="text" 
+                  formControlName="name" 
+                  class="form-control"
+                  placeholder="Назва інгредієнту">
+              </div>
+              <div class="form-group">
+                <input 
+                  type="text" 
+                  formControlName="amount" 
+                  class="form-control"
+                  placeholder="Кількість">
+              </div>
+              <div class="form-group">
+                <input 
+                  type="text" 
+                  formControlName="unit" 
+                  class="form-control"
+                  placeholder="Одиниця">
+              </div>
+              <button 
+                type="button" 
+                class="btn btn-remove"
+                (click)="removeIngredient(i)"
+                [disabled]="ingredients.length === 1">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <button type="button" class="btn btn-add" (click)="addIngredient()">
+          <i class="fas fa-plus"></i>
+          Додати інгредієнт
+        </button>
+      </div>
+
+      <!-- Instructions -->
+      <div class="form-section">
+        <h3>Інструкції приготування</h3>
+        
+        <div formArrayName="instructions">
+          <div *ngFor="let instruction of instructions.controls; let i = index" 
+               [formGroupName]="i" 
+               class="instruction-row">
+            <div class="instruction-number">{{ i + 1 }}</div>
+            <textarea 
+              formControlName="step" 
+              class="form-control"
+              rows="2"
+              placeholder="Опишіть крок приготування..."></textarea>
+            <button 
+              type="button" 
+              class="btn btn-remove"
+              (click)="removeInstruction(i)"
+              [disabled]="instructions.length === 1">
+              <i class="fas fa-trash"></i>
             </button>
-            <button mat-button type="button" routerLink="/recipes">Cancel</button>
-          </mat-card-actions>
-        </form>
-      </mat-card-content>
-    </mat-card>
+          </div>
+        </div>
+        
+        <button type="button" class="btn btn-add" (click)="addInstruction()">
+          <i class="fas fa-plus"></i>
+          Додати крок
+        </button>
+      </div>
+
+      <!-- Additional Characteristics -->
+      <div class="form-section">
+        <h3>Додаткові характеристики</h3>
+        
+        <!-- Allergens -->
+        <div class="characteristic-section">
+          <h4>Алергени</h4>
+          <div formArrayName="allergens">
+            <div *ngFor="let allergen of allergens.controls; let i = index" 
+                 [formGroupName]="i" 
+                 class="characteristic-row">
+              <input 
+                type="text" 
+                formControlName="name" 
+                class="form-control"
+                placeholder="Введіть алерген">
+              <button 
+                type="button" 
+                class="btn btn-remove"
+                (click)="removeAllergen(i)"
+                [disabled]="allergens.length === 1">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-add" (click)="addAllergen()">
+            <i class="fas fa-plus"></i>
+            Додати алерген
+          </button>
+        </div>
+
+        <!-- Cuisines -->
+        <div class="characteristic-section">
+          <h4>Кухні світу</h4>
+          <div formArrayName="cuisines">
+            <div *ngFor="let cuisine of cuisines.controls; let i = index" 
+                 [formGroupName]="i" 
+                 class="characteristic-row">
+              <input 
+                type="text" 
+                formControlName="name" 
+                class="form-control"
+                placeholder="Введіть кухню">
+              <button 
+                type="button" 
+                class="btn btn-remove"
+                (click)="removeCuisine(i)"
+                [disabled]="cuisines.length === 1">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-add" (click)="addCuisine()">
+            <i class="fas fa-plus"></i>
+            Додати кухню
+          </button>
+        </div>
+
+        <!-- Diets -->
+        <div class="characteristic-section">
+          <h4>Дієти</h4>
+          <div formArrayName="diets">
+            <div *ngFor="let diet of diets.controls; let i = index" 
+                 [formGroupName]="i" 
+                 class="characteristic-row">
+              <input 
+                type="text" 
+                formControlName="name" 
+                class="form-control"
+                placeholder="Введіть дієту">
+              <button 
+                type="button" 
+                class="btn btn-remove"
+                (click)="removeDiet(i)"
+                [disabled]="diets.length === 1">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-add" (click)="addDiet()">
+            <i class="fas fa-plus"></i>
+            Додати дієту
+          </button>
+        </div>
+
+        <!-- Tags -->
+        <!-- <div class="characteristic-section">
+          <h4>Теги</h4>
+          <div formArrayName="tags">
+            <div *ngFor="let tag of tags.controls; let i = index" 
+                 [formGroupName]="i" 
+                 class="characteristic-row">
+              <input 
+                type="text" 
+                formControlName="name" 
+                class="form-control"
+                placeholder="Введіть тег">
+              <button 
+                type="button" 
+                class="btn btn-remove"
+                (click)="removeTag(i)"
+                [disabled]="tags.length === 1">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          <button type="button" class="btn btn-add" (click)="addTag()">
+            <i class="fas fa-plus"></i>
+            Додати тег
+          </button>
+        </div> -->
+      </div>
+
+      <!-- Form Actions -->
+      <div class="form-actions">
+        <button type="button" class="btn btn-cancel" (click)="hideCreateForm()">
+          Скасувати
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-submit"
+          [disabled]="recipeForm.invalid || isSubmitting">
+          <span *ngIf="isSubmitting">
+            <i class="fas fa-spinner fa-spin"></i>
+            Створення...
+          </span>
+          <span *ngIf="!isSubmitting">
+            Створити рецепт
+          </span>
+        </button>
+      </div>
+    </form>
   </div>
+</div>

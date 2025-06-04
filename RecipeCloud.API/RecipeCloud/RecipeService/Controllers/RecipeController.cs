@@ -1,10 +1,14 @@
 ﻿using AutoMapper;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Nest;
 using RecipeService.Data;
 using RecipeService.Models;
+using RecipeService.Models.Categories.DTOs;
+using RecipeService.Models.Filter;
 using RecipeService.Models.Pagination;
 using RecipeService.Models.Recipes;
 using RecipeService.Models.Recipes.DTOs;
@@ -16,7 +20,7 @@ using System.Security.Claims;
 namespace RecipeService.Controllers
 {
     // Controllers/RecipeController.cs
-    [Route("api/[controller]")]
+    [Route("api/recipes")]
     [ApiController]
     public class RecipeController : ControllerBase
     {
@@ -105,36 +109,53 @@ namespace RecipeService.Controllers
             return StatusCode(StatusCodes.Status500InternalServerError, _response);
 
         }
-
+        [HttpGet("{transliteratedName}")]
+        public async Task<IActionResult> GetByTransliteratedNameAsync(string transliteratedName)
+        {
+            var model = await _dbRecipe.GetAsync(u => u.TransliteratedName == transliteratedName);
+            var recipe = _mapper.Map<RecipeDTO>(model);
+            return Ok(recipe);
+        }
 
         [HttpPost]
-        [Authorize]
+        //[Authorize]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> CreateRecipeAsync([FromForm] RecipeCreateDTO createDTO, IFormFile image)
+        public async Task<ActionResult<APIResponse>> CreateRecipeAsync([FromBody] RecipeCreateDTO createDTO) //, IFormFile image
         {
             try
             {
+                /*Need*/
                 // Валідація DTO та зображення
-                var createValidationResult = await _createValidator.ValidateAsync((createDTO, image));
-                if (!createValidationResult.IsValid)
-                {
-                    _response.StatusCode = HttpStatusCode.BadRequest;
-                    _response.IsSuccess = false;
-                    _response.ErrorsMessages = createValidationResult.Errors.Select(e => e.ErrorMessage).ToList();
-                    return BadRequest(_response);
-                }
+                //var createValidationResult = await _createValidator.ValidateAsync((createDTO, image));
+                //if (!createValidationResult.IsValid)
+                //{
+                //    _response.StatusCode = HttpStatusCode.BadRequest;
+                //    _response.IsSuccess = false;
+                //    _response.ErrorsMessages = createValidationResult.Errors.Select(e => e.ErrorMessage).ToList();
+                //    return BadRequest(_response);
+                //}
 
-                var imageUrl = await _minIOService.UploadImageAsync(image);
+                //var imageUrl = await _minIOService.UploadImageAsync(image);
+                /*Need*/
                 var recipe = _mapper.Map<Recipe>(createDTO);
-                recipe.ImageUrl = imageUrl;
-               // recipe.CreatedBy = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-                recipe.CreatedBy = Guid.Parse(User.FindFirst("ident")?.Value);
-                recipe.CreatedByUsername = User.FindFirst(ClaimTypes.Email)?.Value;
-                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-                recipe.IsUserCreated = userRole != "Admin" && userRole != "Moderator";
 
+
+                /*Need*/
+                //recipe.ImageUrl = imageUrl;
+                /*Need*/
+
+
+                // recipe.CreatedBy = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+
+
+                /*Need*/
+                //recipe.CreatedBy = Guid.Parse(User.FindFirst("ident")?.Value);
+                //recipe.CreatedByUsername = User.FindFirst(ClaimTypes.Email)?.Value;
+                //var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                //recipe.IsUserCreated = userRole != "Admin" && userRole != "Moderator";
+                /*Need*/
                 await _dbRecipe.CreateAsync(recipe);
 
                 _response.Result = _mapper.Map<RecipeDTO>(recipe);
@@ -150,7 +171,29 @@ namespace RecipeService.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, _response);
             }
         }
+        [HttpPost("batch")]
+        //[Authorize]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public async Task<IActionResult> CreateRecipeBatchAsync([FromBody] List<RecipeCreateDTO> createDTOs)
+        {
+            try
+            {
+                foreach (var dto in createDTOs)
+                {
+                    var recipe = _mapper.Map<Recipe>(dto);
 
+                    await _dbRecipe.CreateAsync(recipe);
+                }
+
+                return NoContent();
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(StatusCodes.Status500InternalServerError);
+            }
+        }
 
         [HttpDelete("{id:guid}", Name = "DeleteRecipe")]
         [Authorize]
@@ -351,5 +394,161 @@ namespace RecipeService.Controllers
                 return StatusCode(StatusCodes.Status500InternalServerError, _response);
             }
         }
+
+        [HttpPatch("{id:guid}/increment-views")]
+        public async Task<IActionResult> IncrementViewCount(Guid id)
+        {
+            try
+            {
+                var success = await _dbRecipe.IncrementViewCountAsync(id);
+
+                if (!success)
+                {
+                    return NotFound($"Recipe with id {id} not found");
+                }
+
+                return Ok(new { message = "View count incremented successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal server error: {ex.Message}");
+            }
+        }
+
+
+        [HttpGet("filter")]
+        public async Task<IActionResult> FilterRecipesAsync(
+        [FromQuery] string filters,
+        [FromQuery] PaginationParams paginationParams,
+        [FromQuery] string sortOrder)
+        {
+            string decodedFilters = Uri.UnescapeDataString(filters);
+            var filterDto = ParseFilters(decodedFilters);
+
+            var list = await _dbRecipe.FilterRecipesAsync(filterDto, paginationParams, sortOrder);
+            var recipes = _mapper.Map<List<RecipeDTO>>(list);
+
+            var totalCount = await _dbRecipe.CountAsync(); // Assuming CountAsync is implemented in the repository
+            var pagedResponse = new PagedResponse<RecipeDTO>(recipes, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
+
+            return Ok(pagedResponse);
+        }
+
+        private RecipeFilterDTO ParseFilters(string filters)
+        {
+            var filterDto = new RecipeFilterDTO();
+            var filterSegments = filters.Split('&', StringSplitOptions.RemoveEmptyEntries);
+
+            foreach (var segment in filterSegments)
+            {
+                var keyValue = segment.Split('=');
+                if (keyValue.Length != 2) continue;
+
+                var key = keyValue[0]; //.ToLower()
+                var value = keyValue[1]; //.ToLower()
+
+                switch (key)
+                {
+                    case "title":
+                        filterDto.Title = value;
+                        break;
+
+                    case "diets":
+                        filterDto.Diets.Add(value);
+                        break;
+
+                    case "allergens":
+                        filterDto.Allergens.Add(value);
+                        break;
+
+                    case "tags":
+                        filterDto.Tags.Add(value);
+                        break;
+
+                    case "cuisines":
+                        filterDto.Cuisines.Add(value);
+                        break;
+
+                    case "isUserCreated":
+                        filterDto.IsUserCreated = bool.Parse(value); 
+                        break;
+
+                    case "categoryId":
+                        if(Guid.TryParse(value, out var guid))
+                        {
+                            filterDto.CategoryId = guid;
+                        }
+                        break;
+                }
+            }
+
+            return filterDto;
+        }
+
+        [HttpGet("checkboxfilter")]
+        public async Task<IActionResult> CheckboxFilterAsync([FromQuery] Guid categoryId)
+        {
+            var list = await _dbRecipe.GetAllAsync(r => r.CategoryId == categoryId);
+            var recipes = _mapper.Map<List<RecipeDTO>>(list);
+
+            var filter = new CheckboxFilter
+            {
+                Diets = recipes
+                    .Where(r => r.Diets != null)
+                    .SelectMany(r => r.Diets)
+                    .Distinct()
+                    .OrderBy(d => d)
+                    .ToList(),
+
+                Allergens = recipes
+                    .Where(r => r.Allergens != null)
+                    .SelectMany(r => r.Allergens)
+                    .Distinct()
+                    .OrderBy(a => a)
+                    .ToList(),
+
+                Cuisines = recipes
+                    .Where(r => !string.IsNullOrEmpty(r.Cuisine))
+                    .Select(r => r.Cuisine)
+                    .Distinct()
+                    .OrderBy(c => c)
+                    .ToList(),
+
+                Tags = recipes
+                    .Where(r => r.Tags != null)
+                    .SelectMany(r => r.Tags)
+                    .Distinct()
+                    .OrderBy(t => t)
+                    .ToList()
+            };
+
+
+            return Ok(filter);
+        }
+
+
+        [HttpGet("by-category/{categoryId:guid}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetRecipesWithSimilarCategoryAsync(Guid categoryId)
+        {
+            try
+            {
+                var list = await _dbRecipe.GetAllAsync(r => r.CategoryId == categoryId);
+                var recipes = _mapper.Map<List<RecipeDTO>>(list);
+
+                return Ok(recipes);
+            }
+            catch (Exception ex)
+            {
+                _response.IsSuccess = false;
+                _response.StatusCode = HttpStatusCode.InternalServerError;
+                _response.ErrorsMessages.Add(ex.ToString());
+            }
+            return StatusCode(StatusCodes.Status500InternalServerError, _response);
+        }
     }
+
+
+
+    
 }

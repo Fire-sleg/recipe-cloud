@@ -1,20 +1,77 @@
-<div class="container">
+<!-- <div class="container">
     <div class="row">
-        <section class="col-sm-3">   
-          <ul class="list-group" >
-            <li class="list-group-item" *ngFor="let category of categories">
-                <a  [routerLink]="['/category', category.transliteratedName]"> <!-- routerLinkActive="active" -->
-                    {{category.name}}
-                </a>
-            </li>
-          </ul>
+        <section class="col-sm-3 categories-section">
+            <ul class="list-group categories-list">
+                <li class="list-group-item category-item" *ngFor="let category of categories">
+                    <a 
+                        class="category-link" 
+                        [routerLink]="['/category', category.transliteratedName]"
+                        routerLinkActive="active">
+                        {{category.name}}
+                    </a>
+                </li>
+            </ul>
         </section>
-        <section class="col-9">
-            <div class="slider h-100">
-                Slider
-            </div>
-            
+        <section class="col-9 carousel-section">
+            <app-banner-carousel></app-banner-carousel>
         </section>
     </div>
-    
-</div>
+    <app-recommendation *ngIf="isAuthenticated"></app-recommendation>
+</div> -->
+<div class="container">
+      <!-- Hero Section -->
+      <section class="hero">
+        <h1>RecipeCloud</h1>
+        <p>Розумна система управління кулінарними рецептами з персональними рекомендаціями. Знайдіть ідеальні страви для будь-якого випадку!</p>
+      </section>
+
+
+      <!-- Categories Section -->
+      <section class="categories">
+        <h2>Категорії страв</h2>
+        <div class="category-grid">
+          <div 
+            class="category-card" 
+            *ngFor="let category of categories"
+            [routerLink]="['/category', category.transliteratedName]"
+            routerLinkActive="active"
+          >
+          <!-- (click)="selectCategory(category.id)"
+            [class.active]="selectedCategory === category.id" -->
+            <!-- <i class="category-icon">{{ category.icon }}</i> -->
+            <a class="category-link" >
+              <h3>{{ category.name }}</h3>
+            </a>
+            
+            <!-- <p>{{ category.description }}</p> -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Recommendations Section -->
+      <!-- <section class="recommendations">
+        <h2>🔥 Персональні рекомендації</h2>
+        <div class="recipe-cards">
+          <div 
+            class="recipe-card" 
+            *ngFor="let recipe of recommendedRecipes"
+            (click)="openRecipe(recipe.id)"
+          >
+            <div class="recipe-image">{{ recipe.icon }}</div>
+            <div class="recipe-content">
+              <h3 class="recipe-title">{{ recipe.title }}</h3>
+              <div class="recipe-meta">
+                <span><i class="fas fa-clock"></i> {{ recipe.time }}</span>
+                <span><i class="fas fa-star"></i> {{ recipe.rating }}</span>
+                <span><i class="fas fa-users"></i> {{ recipe.servings }} порції</span>
+              </div>
+              <div class="recipe-tags">
+                <span class="tag" *ngFor="let tag of recipe.tags">{{ tag }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section> -->
+
+      <app-recommendation *ngIf="isAuthenticated"></app-recommendation>
+    </div>

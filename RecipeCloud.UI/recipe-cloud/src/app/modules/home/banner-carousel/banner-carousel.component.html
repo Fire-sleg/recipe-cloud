@@ -1,14 +1,41 @@
-<div class="w-full h-[600px]">
-  <!-- <swiper [config]="config">
-    <ng-template swiperSlide *ngFor="let banner of banners">
-      <div class="relative h-[600px] bg-cover bg-center" [style.backgroundImage]="'url(' + banner.image + ')'">
-        <div class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div class="text-center text-white">
-            <h2 class="text-4xl font-serif mb-4">{{ banner.title }}</h2>
-            <a [routerLink]="banner.link" class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700">Переглянути</a>
-          </div>
-        </div>
-      </div>
-    </ng-template>
-  </swiper> -->
+<div class="slider-container">
+  <!-- Main slider -->
+  <div class="slider-wrapper">
+    <div 
+      class="slide" 
+      *ngFor="let image of images; let i = index"
+      [class.active]="i === currentIndex"
+      [@slideAnimation]="i === currentIndex ? 'active' : 'inactive'"
+    >
+      <img [src]="image"  />
+    </div>
+  </div>
+
+  <!-- Navigation arrows -->
+  <button class="nav-btn prev-btn" (click)="previousSlide()" [disabled]="images.length <= 1">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M15 18L9 12L15 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+  
+  <button class="nav-btn next-btn" (click)="nextSlide()" [disabled]="images.length <= 1">
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+      <path d="M9 18L15 12L9 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </button>
+
+  <!-- Dots indicator -->
+  <div class="dots-container" *ngIf="images.length > 1">
+    <button 
+      class="dot" 
+      *ngFor="let image of images; let i = index"
+      [class.active]="i === currentIndex"
+      (click)="goToSlide(i)"
+    ></button>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-bar" *ngIf="autoPlay && images.length > 1">
+    <div class="progress-fill" [style.animation-duration.ms]="interval"></div>
+  </div>
 </div>

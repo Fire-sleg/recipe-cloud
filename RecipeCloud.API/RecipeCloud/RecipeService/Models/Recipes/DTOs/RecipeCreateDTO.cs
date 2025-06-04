@@ -44,5 +44,10 @@ namespace RecipeService.Models.Recipes.DTOs
         public List<string> Directions { get; set; } = new List<string>();
         public int Serving { get; set; }
         public Guid CategoryId { get; set; }
+
+
+        /*For testing*/
+        public string ImageUrl { get; set; }
+        public string CreatedByUsername { get; set; }
     }
 }

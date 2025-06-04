@@ -29,6 +29,7 @@ namespace RecommendationService.Models
 
         [MaxLength(50)]
         public string CreatedByUsername { get; set; } // Для відображення автора
+        public bool IsUserCreated { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -69,5 +70,8 @@ namespace RecommendationService.Models
 
         [JsonIgnore]
         public virtual Category? Category { get; set; }
+
+        public int ViewCount { get; set; }
+        public double AverageRating { get; set; }
     }
 }

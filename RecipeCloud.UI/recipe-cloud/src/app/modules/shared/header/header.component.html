@@ -1,4 +1,4 @@
-<mat-toolbar color="primary">
+<!-- <mat-toolbar color="primary">
   <a class="navbar-brand" [routerLink]="['']">RecipeCloud</a>
   <div class="spacer"></div>
   <button mat-button routerLink="/recipes">Recipes</button>
@@ -14,4 +14,35 @@
 </mat-toolbar>
 
 
-
+ -->
+<mat-toolbar class="recipe-header">
+  <a class="navbar-brand" [routerLink]="['']">RecipeCloud</a>
+  <div class="spacer"></div>
+  
+  
+  <button mat-button routerLink="/profile" routerLinkActive="active" *ngIf="isAuthenticated$ | async">
+    <mat-icon>person</mat-icon>
+    <span class="btn-text">Профіль</span>
+  </button>
+  
+  <button mat-button routerLink="/admin" routerLinkActive="active" class="admin-btn" 
+          *ngIf="(isAuthenticated$ | async) && (currentUser$ | async)?.isAdmin">
+    <mat-icon>admin_panel_settings</mat-icon>
+    <span class="btn-text">Адмін панель</span>
+  </button>
+  
+  <button mat-button (click)="logout()" class="logout-btn" *ngIf="isAuthenticated$ | async">
+    <mat-icon>logout</mat-icon>
+    <span class="btn-text">Вихід</span>
+  </button>
+  
+  <button mat-button routerLink="/auth/login" class="login-btn" *ngIf="!(isAuthenticated$ | async)">
+    <mat-icon>login</mat-icon>
+    <span class="btn-text">Вхід</span>
+  </button>
+  
+  <button mat-button routerLink="/auth/register" class="register-btn" *ngIf="!(isAuthenticated$ | async)">
+    <mat-icon>person_add</mat-icon>
+    <span class="btn-text">Реєстрація</span>
+  </button>
+</mat-toolbar>

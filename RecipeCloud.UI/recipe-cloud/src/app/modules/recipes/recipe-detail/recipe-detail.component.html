@@ -1,22 +1,266 @@
-<div class="recipe-detail" *ngIf="recipe$ | async as recipe">
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>{{ recipe.title }}</mat-card-title>
-      </mat-card-header>
-      <img mat-card-image [src]="recipe.imageUrl || 'assets/placeholder.jpg'" alt="{{ recipe.title }}">
-      <mat-card-content>
-        <h3>Ingredients</h3>
-        <mat-list>
-          <mat-list-item *ngFor="let ingredient of recipe.ingredients">
-            {{ ingredient }}
-          </mat-list-item>
-        </mat-list>
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-button routerLink="/recipes">Back to List</button>
-        <button mat-button routerLink="/recipes/edit/{{ recipe.id }}" *ngIf="(isAuthenticated$ | async)">
-          Edit Recipe
-        </button>
-      </mat-card-actions>
-    </mat-card>
+
+<div class="recipe-detail-container" *ngIf="recipe">
+  <!-- Header Section -->
+  <div class="recipe-header">
+    <div class="container">
+      <div class="row align-items-center">
+        <div class="col-md-8">
+          <div class="recipe-title-section">
+            <app-breadcrumb [recipe]="recipe"></app-breadcrumb>
+            <h1 class="recipe-title">{{ recipe?.title }}</h1>
+            <p class="recipe-description">{{ recipe?.description }}</p>
+            
+            <!-- Meta Information -->
+            <div class="recipe-meta">
+              <div class="meta-item">
+                <span class="meta-icon">👁️</span>
+                <span class="meta-text">{{ recipe?.viewCount }} переглядів</span>
+              </div>
+              <div class="meta-item" *ngIf="recipe.averageRating > 0">
+                <span class="meta-icon">⭐</span>
+                <span class="meta-text">{{ recipe?.averageRating | number:'1.1-1' }} зірок </span>
+              </div>
+              <div class="meta-item" *ngIf="recipe?.isUserCreated">
+                <span class="meta-icon">👤</span>
+                <span class="meta-text">Створено користувачем</span>
+              </div>
+            </div>
+
+            <!-- Edit Button -->
+            <!-- <div class="recipe-actions" *ngIf="canEditRecipe()">
+              <button class="btn-edit-recipe" (click)="onEditRecipe()">
+                <span class="edit-icon">✏️</span>
+                  Редагувати рецепт
+              </button>
+              <button class="btn-delete-recipe" (click)="onDeleteRecipe()">
+                <span class="delete-icon">🗑️</span>
+                  Видалити рецепт
+              </button>
+            </div> -->
+            <!-- Recipe Actions Section -->
+            <div class="recipe-actions" *ngIf="isAuthenticated">
+              <!-- Add to Collection Button -->
+              <button class="btn-add-collection" (click)="onAddToCollection()">
+                <span class="collection-icon">📚</span>
+                Додати до колекції
+              </button>
+
+              <!-- Edit/Delete Buttons (only if user can edit) -->
+              <ng-container *ngIf="canEditRecipe()">
+                <button class="btn-edit-recipe" (click)="onEditRecipe()">
+                  <span class="edit-icon">✏️</span>
+                  Редагувати рецепт
+                </button>
+                <button class="btn-delete-recipe" (click)="onDeleteRecipe()">
+                  <span class="delete-icon">🗑️</span>
+                  Видалити рецепт
+                </button>
+              </ng-container>
+            </div>
+
+            <!-- Rating Section -->
+            <div class="rating-section">
+              <div class="rating-stars">
+                <span 
+                  *ngFor="let star of ratings" 
+                  class="star"
+                  [class]="getStarClass(star)"
+                  (click)="onStarClick(star)"
+                  (mouseenter)="onStarHover(star)"
+                  (mouseleave)="onStarLeave()">
+                  ★
+                </span>
+              </div>
+              <p class="rating-text">{{ getRatingText() }}</p>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="recipe-image-wrapper">
+            <img [src]="recipe?.imageUrl" 
+                 [alt]="recipe?.title" 
+                 class="recipe-main-image"
+                 (error)="onImageError($event)">
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Main Content -->
+  <div class="recipe-content">
+    <div class="container">
+      <div class="row">
+        <!-- Left Column - Recipe Info -->
+        <div class="col-lg-8">
+          <!-- Quick Info Cards -->
+          <div class="quick-info-section">
+            <div class="row">
+              <div class="col-sm-6 col-lg-3">
+                <div class="info-card">
+                  <div class="info-icon">⏱️</div>
+                  <div class="info-content">
+                    <div class="info-value">{{ recipe?.cookingTime }}</div>
+                    <div class="info-label">хвилин</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6 col-lg-3">
+                <div class="info-card">
+                  <div class="info-icon">🍽️</div>
+                  <div class="info-content">
+                    <div class="info-value">{{ recipe?.serving }}</div>
+                    <div class="info-label">порцій</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6 col-lg-3">
+                <div class="info-card">
+                  <div class="info-icon">📊</div>
+                  <div class="info-content">
+                    <div class="info-value">{{ recipe?.difficulty }}</div>
+                    <div class="info-label">складність</div>
+                  </div>
+                </div>
+              </div>
+              <div class="col-sm-6 col-lg-3">
+                <div class="info-card">
+                  <div class="info-icon">🔥</div>
+                  <div class="info-content">
+                    <div class="info-value">{{ recipe?.calories }}</div>
+                    <div class="info-label">калорій</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ingredients Section -->
+          <div class="recipe-section">
+            <h2 class="section-title">
+              <span class="section-icon">🥗</span>
+              Інгредієнти
+            </h2>
+            <div class="ingredients-list">
+              <div class="ingredient-item" *ngFor="let ingredient of recipe?.ingredients; let i = index">
+                <div class="ingredient-checkbox">
+                  <input type="checkbox" [id]="'ingredient-' + i" class="checkbox-input">
+                  <label [for]="'ingredient-' + i" class="ingredient-label">
+                    {{ ingredient }}
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Directions Section -->
+          <div class="recipe-section">
+            <h2 class="section-title">
+              <span class="section-icon">👩‍🍳</span>
+              Приготування
+            </h2>
+            <div class="directions-list">
+              <div class="direction-item" *ngFor="let direction of recipe?.directions; let i = index">
+                <div class="direction-number">{{ i + 1 }}</div>
+                <div class="direction-content">
+                  <p>{{ direction }}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column - Additional Info -->
+        <div class="col-lg-4">
+          <!-- Rating Statistics -->
+          <!-- <div class="info-sidebar-section" *ngIf="recipe.averageRating > 0">
+            <h3 class="sidebar-title">Оцінки</h3>
+            <div class="rating-stats">
+              <div class="average-rating">
+                <span class="rating-number">{{ recipe?.averageRating | number:'1.1-1' }}</span>
+                <div class="rating-stars-display">
+                  <span 
+                    *ngFor="let star of [1,2,3,4,5]" 
+                    class="star-display"
+                    [class.filled]="star <= (recipe?.averageRating || 0)">
+                    ★
+                  </span>
+                </div>
+                <span class="rating-count">{{ recipe?.averageRating }} оцінок</span>
+              </div>
+            </div>
+          </div> -->
+
+          <!-- Nutrition Facts -->
+          <div class="info-sidebar-section">
+            <h3 class="sidebar-title">Харчова цінність (на порцію)</h3>
+            <div class="nutrition-grid">
+              <div class="nutrition-item">
+                <div class="nutrition-label">Калорії</div>
+                <div class="nutrition-value">{{ recipe?.calories }}</div>
+              </div>
+              <div class="nutrition-item">
+                <div class="nutrition-label">Білки</div>
+                <div class="nutrition-value">{{ recipe?.protein | number:'1.1-1' }}г</div>
+              </div>
+              <div class="nutrition-item">
+                <div class="nutrition-label">Жири</div>
+                <div class="nutrition-value">{{ recipe?.fat | number:'1.1-1' }}г</div>
+              </div>
+              <div class="nutrition-item">
+                <div class="nutrition-label">Вуглеводи</div>
+                <div class="nutrition-value">{{ recipe?.carbohydrates | number:'1.1-1' }}г</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cuisine & Diet Info -->
+          <div class="info-sidebar-section" *ngIf="recipe.cuisine">
+            <h3 class="sidebar-title">Кухня</h3>
+            <div class="cuisine-badge">
+              {{ recipe?.cuisine }}
+            </div>
+          </div>
+
+          <!-- Diets -->
+          <div class="info-sidebar-section" *ngIf="recipe.diets && recipe.diets.length">
+            <h3 class="sidebar-title">Дієти</h3>
+            <div class="tags-container">
+              <span class="tag diet-tag" *ngFor="let diet of recipe.diets">
+                {{ diet }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Allergens -->
+          <div class="info-sidebar-section" *ngIf="recipe.allergens && recipe.allergens.length">
+            <h3 class="sidebar-title">Алергени</h3>
+            <div class="tags-container">
+              <span class="tag allergen-tag" *ngFor="let allergen of recipe.allergens">
+                ⚠️ {{ allergen }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <div class="info-sidebar-section" *ngIf="recipe.tags && recipe.tags.length">
+            <h3 class="sidebar-title">Теги</h3>
+            <div class="tags-container">
+              <span class="tag regular-tag" *ngFor="let tag of recipe.tags">
+                {{ tag }}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Loading State -->
+<div class="loading-state" *ngIf="!recipe">
+  <div class="loading-content">
+    <div class="spinner"></div>
+    <p>Завантаження рецепту...</p>
+  </div>
+</div>

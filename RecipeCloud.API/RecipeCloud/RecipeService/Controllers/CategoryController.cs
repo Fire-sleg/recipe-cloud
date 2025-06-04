@@ -37,12 +37,25 @@ namespace RecipeService.Controllers
                 withSubCategories: true, 
                 withRecipes: false
             );
+            list = list.OrderBy(c => c.Order).ToList();
+
+            var categories = _mapper.Map<List<CategoryDTO>>(list);
+            return Ok(categories);
+        }
+        [HttpGet("sub")]
+        public async Task<IActionResult> GetSubCategoriesAsync()
+        {
+            var list = await _dbCategory.GetAllAsync(
+                c => c.ParentCategoryId != null || c.ParentCategoryId != Guid.Empty,
+                withSubCategories: true,
+                withRecipes: false
+            );
+            list = list.OrderBy(c => c.Order).ToList();
 
             var categories = _mapper.Map<List<CategoryDTO>>(list);
             return Ok(categories);
         }
 
-        
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetAsync(Guid id)
@@ -81,6 +94,34 @@ namespace RecipeService.Controllers
             await _dbCategory.CreateAsync(model);
             return NoContent();
         }
+
+        [HttpPost("batch")]
+        public async Task<IActionResult> CreateBatchAsync([FromBody] List<CategoryCreateDTO> createDTOs)
+        {
+            if (createDTOs == null || !createDTOs.Any())
+            {
+                return BadRequest("Empty category list");
+            }
+
+            foreach (var dto in createDTOs)
+            {
+                if (await _dbCategory.GetAsync(
+                        u => u.Name.ToLower() == dto.Name.ToLower(),
+                        withSubCategories: false,
+                        withRecipes: false,
+                        tracked: false) != null)
+                {
+                    // можеш пропустити, або зібрати в список помилок
+                    continue;
+                }
+
+                var model = _mapper.Map<Category>(dto);
+                await _dbCategory.CreateAsync(model);
+            }
+
+            return NoContent();
+        }
+
 
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteAsync(Guid id)

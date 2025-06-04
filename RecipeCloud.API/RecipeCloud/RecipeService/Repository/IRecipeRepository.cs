@@ -1,5 +1,7 @@
-﻿using RecipeService.Models.Pagination;
+﻿using RecipeService.Models.Filter;
+using RecipeService.Models.Pagination;
 using RecipeService.Models.Recipes;
+using RecipeService.Models.Recipes.DTOs;
 using System.Linq.Expressions;
 
 namespace RecipeService.Repository
@@ -13,6 +15,7 @@ namespace RecipeService.Repository
         Task RemoveAsync(Recipe entity);
         Task SaveAsync();
         Task<int> CountAsync(Expression<Func<Recipe, bool>>? filter = null);
-
+        Task<List<Recipe>> FilterRecipesAsync(RecipeFilterDTO filterDto, PaginationParams? paginationParams = null, string? sortOrder = null);
+        Task<bool> IncrementViewCountAsync(Guid recipeId);
     }
 }

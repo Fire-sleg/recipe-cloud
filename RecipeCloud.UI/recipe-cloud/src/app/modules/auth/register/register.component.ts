@@ -29,7 +29,7 @@ export class RegisterComponent {
       const { name, email, password } = this.registerForm.value;
       this.authService.register(name, email, password).subscribe({
         next: () => {
-          this.router.navigate(['/recipes']);
+          this.router.navigate(['']);
         },
         error: (err) => {
           this.errorMessage = err.message || 'Registration failed. Please try again.';

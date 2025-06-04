@@ -1,0 +1,263 @@
+{
+  "info": {
+    "name": "RecipeCloud - Create Categories",
+    "_postman_id": "b2c3d4e5-7f90-a2b3-c4d5-f78912345678",
+    "description": "Колекція для створення основних категорій та підкатегорій у RecipeService",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Main Categories",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": [
+            {
+              "name": "Breakfasts",
+              "imageUrl": "breakfasts.jpg",
+              "order": 1
+            },
+            {
+              "name": "Lunches & Dinners",
+              "imageUrl": "lunches-dinners.jpg",
+              "order": 2
+            },
+            {
+              "name": "Desserts",
+              "imageUrl": "desserts.jpg",
+              "order": 3
+            },
+            {
+              "name": "Dietary",
+              "imageUrl": "dietary.jpg",
+              "order": 4
+            },
+            {
+              "name": "World Cuisines",
+              "imageUrl": "world-cuisines.jpg",
+              "order": 5
+            },
+            {
+              "name": "Festive",
+              "imageUrl": "festive.jpg",
+              "order": 6
+            },
+            {
+              "name": "Snacks",
+              "imageUrl": "snacks.jpg",
+              "order": 7
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:5051/api/categories",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5051",
+          "path": ["api", "categories"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Create Subcategories",
+      "request": {
+          "method": "POST",
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": {
+            "mode": "raw",
+            "raw": [
+              {
+                "name": "Quick Breakfasts",
+                "imageUrl": "quick-breakfasts.jpg",
+                "parentCategoryId": "{{BreakfastsId}}",
+                "order": 1
+              },
+              {
+                "name": "Vegan Breakfasts",
+                "imageUrl": "vegan-breakfasts.jpg",
+                "parentCategoryId": "{{BreakfastsId}}",
+                "order": 2
+              },
+            {
+              "name": "Hearty Breakfasts",
+              "imageUrl": "hearty-breakfasts.jpg",
+              "parentCategoryId": "{{BreakfastsId}}",
+              "order": 3
+            },
+            {
+              "name": "Light Dishes",
+              "imageUrl": "light-dishes.jpg",
+              "parentCategoryId": "{{LunchesAndDinnersId}}",
+              "order": 1
+            },
+            {
+              "name": "Hearty Dishes",
+              "imageUrl": "hearty-dishes.jpg",
+              "parentCategoryId": "{{LunchesAndDinnersId}}",
+              "order": 2
+            },
+            {
+              "name": "Quick Dinners",
+              "imageUrl": "quick-dinners.jpg",
+              "parentCategoryId": "{{LunchesAndDinnersId}}",
+              "order": 3
+            },
+            {
+              "name": "Light Desserts",
+              "imageUrl": "light-desserts.jpg",
+              "parentCategoryId": "{{DessertsId}}",
+              "order": 1
+            },
+            {
+              "name": "Baked Goods",
+              "imageUrl": "baked-goods.jpg",
+              "parentCategoryId": "{{DessertsId}}",
+              "order": 2
+            },
+            {
+              "name": "Sugar-Free",
+              "imageUrl": "sugar-free.jpg",
+              "parentCategoryId": "{{DessertsId}}",
+              "order": 3
+            },
+            {
+              "name": "Vegan",
+              "imageUrl": "vegan.jpg",
+              "parentCategoryId": "{{DietaryId}}",
+              "order": 1
+            },
+            {
+              "name": "Gluten-Free",
+              "imageUrl": "gluten-free.jpg",
+              "parentCategoryId": "{{DietaryId}}",
+              "order": 2
+            },
+            {
+              "name": "Keto",
+              "imageUrl": "keto.jpg",
+              "parentCategoryId": "{{DietaryId}}",
+              "order": 3
+            },
+            {
+              "name": "Allergen-Free",
+              "imageUrl": "allergen-free.jpg",
+              "parentCategoryId": "{{DietaryId}}",
+              "order": 4
+            },
+            {
+              "name": "European",
+              "imageUrl": "european.jpg",
+              "parentCategoryId": "{{WorldCuisinesId}}",
+              "order": 1
+            },
+            {
+              "name": "Asian",
+              "imageUrl": "asian.jpg",
+              "parentCategoryId": "{{WorldCuisinesId}}",
+              "order": 2
+            },
+            {
+              "name": "Ukrainian",
+              "imageUrl": "ukrainian.jpg",
+              "parentCategoryId": "{{WorldCuisinesId}}",
+              "order": 3
+            },
+            {
+              "name": "Latin American",
+              "imageUrl": "latin-american.jpg",
+              "parentCategoryId": "{{WorldCuisinesId}}",
+              "order": 4
+            },
+            {
+              "name": "Christmas & New Year",
+              "imageUrl": "christmas-new-year.jpg",
+              "parentCategoryId": "{{FestiveId}}",
+              "order": 1
+            },
+            {
+              "name": "Easter",
+              "imageUrl": "easter.jpg",
+              "parentCategoryId": "{{FestiveId}}",
+              "order": 2
+            },
+            {
+              "name": "Birthdays",
+              "imageUrl": "birthdays.jpg",
+              "parentCategoryId": "{{FestiveId}}",
+              "order": 3
+            },
+            {
+              "name": "Healthy Snacks",
+              "imageUrl": "healthy-snacks.jpg",
+              "parentCategoryId": "{{SnacksId}}",
+              "order": 1
+            },
+            {
+              "name": "Sweet Snacks",
+              "imageUrl": "sweet-snacks.jpg",
+              "parentCategoryId": "{{SnacksId}}",
+              "order": 2
+            },
+            {
+              "name": "Party Appetizers",
+              "imageUrl": "party-appetizers.jpg",
+              "parentCategoryId": "{{SnacksId}}",
+              "order": 3
+            }
+          ]
+        },
+        "url": {
+          "raw": "http://localhost:5051/api/categories",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5051",
+          "path": ["api", "categories"]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "BreakfastsId",
+      "value": "replace_with_actual_guid"
+    },
+    {
+      "key": "LunchesAndDinnersId",
+      "value": "replace_with_actual_guid"
+    },
+    {
+      "key": "DessertsId",
+      "value": "replace_with_actual_guid"
+    },
+    {
+      "key": "DietaryId",
+      "value": "replace_with_actual_guid"
+    },
+    {
+      "key": "WorldCuisinesId",
+      "value": "replace_with_actual_guid"
+    },
+    {
+      "key": "FestiveId",
+      "value": "replace_with_actual_guid"
+    },
+    {
+      "key": "SnacksId",
+      "value": "replace_with_actual_guid"
+    }
+  ]
+}

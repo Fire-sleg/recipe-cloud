@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
+import { Observable, BehaviorSubject, firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { User } from '../models/user.model';
 import { tap } from 'rxjs/operators';
+import { UserPreferences } from '../models/user-preferences.model';
+import { ViewHistory } from '../models/view-history.model';
 
 @Injectable({
   providedIn: 'root'
@@ -19,15 +21,58 @@ export class AuthService {
     }
   }
 
-  login(username: string, password: string): Observable<{ token: string; user: User }> {
-    return this.http.post<{ token: string; user: User }>(`${environment.apiUrl}/auth/login`, { username, password })
-      .pipe(
-        tap(response => this.setUser(response.user, response.token))
-      );
+  // login(username: string, password: string): Observable<{ token: string; user: User }> {
+  //   return this.http.post<{ token: string; user: User }>(`${environment.authApiUrl}/auth/login`, { username, password })
+  //     .pipe(
+  //       tap(response => this.setUser(response.user, response.token))
+  //     );
+  // }
+  getCurrentUserId(): string {
+    const userJson = localStorage.getItem('user');
+    const userId = userJson ? JSON.parse(userJson).id : null;
+    return userId;
+  }
+  logView(recipeId: string): Observable<any> {
+    debugger;
+    return this.http.post(`${environment.authApiUrl}/view-history`, {recipeId});
   }
 
+
+
+  login(email: string, password: string): Observable<any> {
+    return this.http.post<any>(
+      `${environment.authApiUrl}/auth/login`,
+      { email, password }
+    ).pipe(
+      tap(async response => {
+        const user: User = {
+          id: response.id,
+          username: response.username,
+          role: response.role,
+          isAdmin: response.role === 'Admin'
+        };
+        const token = response.tokenModel.accessToken;
+        this.setUser(user, token);
+        // Стягування преференсів після логіну
+        const preferences = await firstValueFrom(this.getPreferences(user.id));
+        localStorage.setItem('preferences', JSON.stringify(preferences));
+      })
+    );
+  }
+  getPreferences(userId: string): Observable<UserPreferences> {
+    debugger;
+    console.log(`${environment.authApiUrl}/preferences/${userId}`);
+    return this.http.get<UserPreferences>(`${environment.authApiUrl}/preferences/${userId}`);
+  }
+  savePreferences(prefs: UserPreferences): Observable<void> {
+    return this.http.post<void>(`${environment.authApiUrl}/preferences`, prefs);
+  }
+
+
+
   register(username: string, email: string, password: string): Observable<User> {
-    return this.http.post<User>(`${environment.apiUrl}/auth/register`, { username, email, password });
+    debugger;
+    return this.http.post<User>(`${environment.authApiUrl}/auth/register`, { username, email, password });
   }
 
   logout(): void {

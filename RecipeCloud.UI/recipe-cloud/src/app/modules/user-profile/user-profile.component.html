@@ -1,0 +1,277 @@
+<div class="profile-container">
+  <div class="container">
+    <div class="profile-header">
+      <h1 class="profile-title">
+        <span class="title-icon">👤</span>
+        Мій профіль
+      </h1>
+      <p class="profile-subtitle">Налаштуйте свої харчові переваги для персоналізованих рекомендацій</p>
+    </div>
+
+    <div class="profile-content">
+      <!-- Sidebar Navigation -->
+      <div class="profile-sidebar">
+        <nav class="profile-nav">
+          <button 
+            class="nav-btn" 
+            [class.active]="activeTab === 'preferences'"
+            (click)="setActiveTab('preferences')">
+            <span class="nav-icon">🥗</span>
+            <span class="nav-text">Вподобання</span>
+          </button>
+          
+          <button 
+            class="nav-btn" 
+            [class.active]="activeTab === 'recipes'"
+            (click)="setActiveTab('recipes')">
+            <span class="nav-icon">👨‍🍳</span>
+            <span class="nav-text">Створені рецепти</span>
+          </button>
+          
+          <button 
+            class="nav-btn" 
+            [class.active]="activeTab === 'collections'"
+            (click)="setActiveTab('collections')">
+            <span class="nav-icon">📚</span>
+            <span class="nav-text">Колекції рецептів</span>
+          </button>
+        </nav>
+      </div>
+
+      <!-- Main Content -->
+      <div class="profile-main">
+        <!-- Preferences Tab -->
+        <div *ngIf="activeTab === 'preferences'" class="tab-content">
+          <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="profile-form">
+            <!-- Diets Section -->
+            <div class="form-section">
+              <div class="section-header">
+                <h2 class="section-title">
+                  <span class="section-icon">🥗</span>
+                  Дієти
+                </h2>
+                <p class="section-description">Оберіть дієти, яких ви дотримуєтесь</p>
+              </div>
+              
+              <div class="options-grid">
+                <div *ngFor="let diet of availableDiets; let i = index" class="option-item">
+                  <div class="custom-checkbox-wrapper">
+                    <input type="checkbox" 
+                           [formControl]="$any(diets.controls[i])" 
+                           [id]="'diet-' + i" 
+                           class="custom-checkbox-input">
+                    <label [for]="'diet-' + i" class="custom-checkbox-label diet-label">
+                      <span class="checkbox-indicator"></span>
+                      <span class="checkbox-text">{{ diet }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Allergens Section -->
+            <div class="form-section">
+              <div class="section-header">
+                <h2 class="section-title">
+                  <span class="section-icon">⚠️</span>
+                  Алергени
+                </h2>
+                <p class="section-description">Вкажіть продукти, на які у вас алергія</p>
+              </div>
+              
+              <div class="options-grid">
+                <div *ngFor="let allergen of availableAllergens; let i = index" class="option-item">
+                  <div class="custom-checkbox-wrapper">
+                    <input type="checkbox" 
+                           [formControl]="$any(allergens.controls[i])" 
+                           [id]="'allergen-' + i" 
+                           class="custom-checkbox-input">
+                    <label [for]="'allergen-' + i" class="custom-checkbox-label allergen-label">
+                      <span class="checkbox-indicator"></span>
+                      <span class="checkbox-text">{{ allergen }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cuisines Section -->
+            <div class="form-section">
+              <div class="section-header">
+                <h2 class="section-title">
+                  <span class="section-icon">🌍</span>
+                  Улюблені кухні
+                </h2>
+                <p class="section-description">Оберіть кухні світу, які вам подобаються</p>
+              </div>
+              
+              <div class="options-grid">
+                <div *ngFor="let cuisine of availableCuisines; let i = index" class="option-item">
+                  <div class="custom-checkbox-wrapper">
+                    <input type="checkbox" 
+                           [formControl]="$any(cuisines.controls[i])" 
+                           [id]="'cuisine-' + i" 
+                           class="custom-checkbox-input">
+                    <label [for]="'cuisine-' + i" class="custom-checkbox-label cuisine-label">
+                      <span class="checkbox-indicator"></span>
+                      <span class="checkbox-text">{{ cuisine }}</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit Button -->
+            <div class="form-actions">
+              <button type="submit" 
+                      class="submit-btn"
+                      [class.loading]="isSubmitting"
+                      [disabled]="profileForm.invalid || isSubmitting">
+                <span *ngIf="!isSubmitting" class="btn-content">
+                  <span class="btn-icon">💾</span>
+                  Зберегти зміни
+                </span>
+                <span *ngIf="isSubmitting" class="btn-content">
+                  <span class="spinner"></span>
+                  Збереження...
+                </span>
+              </button>
+              
+              <button type="button" 
+                      class="reset-btn"
+                      (click)="resetForm()"
+                      [disabled]="isSubmitting">
+                <span class="btn-icon">🔄</span>
+                Скинути
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Created Recipes Tab -->
+        <div *ngIf="activeTab === 'recipes'" class="tab-content">
+          <div class="recipes-section">
+            <div class="section-header">
+              <h2 class="section-title">
+                <span class="section-icon">👨‍🍳</span>
+                Мої створені рецепти
+              </h2>
+              <p class="section-description">Рецепти, які ви створили та додали до системи</p>
+            </div>
+            
+            <div class="recipes-grid" *ngIf="userRecipes.length > 0; else noRecipes">
+              <div *ngFor="let recipe of userRecipes" class="recipe-card">
+                <div class="recipe-image">
+                  <img [src]="recipe.imageUrl || '/assets/default-recipe.jpg'" [alt]="recipe.title">
+                </div>
+                <div class="recipe-info">
+                  <h3 class="recipe-name">{{ recipe.title }}</h3>
+                  <p class="recipe-description">{{ recipe.description }}</p>
+                  <div class="recipe-meta">
+                    <span class="recipe-time">⏱️ {{ recipe.cookingTime }} хв</span>
+                    <span class="recipe-difficulty">📊 {{ recipe.difficulty }}</span>
+                  </div>
+                  <div class="recipe-actions">
+                    <button class="action-btn edit" (click)="editRecipe(recipe.id)">
+                      <span>✏️</span> Редагувати
+                    </button>
+                    <button class="action-btn delete" (click)="deleteRecipe(recipe.id)">
+                      <span>🗑️</span> Видалити
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <ng-template #noRecipes>
+              <div class="empty-state">
+                <div class="empty-icon">👨‍🍳</div>
+                <h3>Ви ще не створили жодного рецепту</h3>
+                <p>Почніть створювати власні кулінарні шедеври!</p>
+                <button class="create-recipe-btn" (click)="createNewRecipe()">
+                  <span>➕</span> Створити рецепт
+                </button>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+
+        <!-- Recipe Collections Tab -->
+        <div *ngIf="activeTab === 'collections'" class="tab-content">
+          <div class="collections-section">
+            <div class="section-header">
+              <h2 class="section-title">
+                <span class="section-icon">📚</span>
+                Мої колекції рецептів
+              </h2>
+              <p class="section-description">Організуйте улюблені рецепти у тематичні колекції</p>
+              <button class="create-collection-btn" (click)="createNewCollection()">
+                <span>➕</span> Створити колекцію
+              </button>
+            </div>
+            
+            <div class="collections-grid" *ngIf="userCollections.length > 0; else noCollections">
+              <div *ngFor="let collection of userCollections" class="collection-card">
+                <div class="collection-header">
+                  <h3 class="collection-name">{{ collection.title }}</h3>
+                  <div class="collection-meta">
+                    <span class="recipe-count">📝 {{ collection.recipes.length }} рецептів</span>
+                    <div class="collection-actions">
+                      <button class="action-btn small" (click)="editCollection(collection.id)" title="Редагувати">
+                        ✏️
+                      </button>
+                      <button class="action-btn small delete" (click)="deleteCollection(collection.id)" title="Видалити">
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="collection-recipes" *ngIf="collection.recipes.length > 0; else emptyCollection">
+                  <div *ngFor="let recipe of collection.recipes" class="collection-recipe">
+                    <div class="recipe-thumb">
+                      <img [src]="recipe.imageUrl || '/assets/default-recipe.jpg'" [alt]="recipe.title">
+                    </div>
+                    <div class="recipe-details">
+                      <h4 class="recipe-title">{{ recipe.title }}</h4>
+                      <p class="recipe-time">⏱️ {{ recipe.cookingTime }} хв</p>
+                    </div>
+                    <button class="remove-recipe-btn" (click)="removeFromCollection(collection.id, recipe.id)" title="Видалити з колекції">
+                      ❌
+                    </button>
+                  </div>
+                </div>
+                
+                <ng-template #emptyCollection>
+                  <div class="empty-collection">
+                    <p>Колекція порожня</p>
+                    <button class="add-recipe-btn" (click)="addRecipeToCollection(collection.id)">
+                      ➕ Додати рецепт
+                    </button>
+                  </div>
+                </ng-template>
+                
+                <div class="collection-footer" *ngIf="collection.recipes.length > 0">
+                  <button class="add-recipe-btn" (click)="addRecipeToCollection(collection.id)">
+                    ➕ Додати рецепт
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <ng-template #noCollections>
+              <div class="empty-state">
+                <div class="empty-icon">📚</div>
+                <h3>У вас немає колекцій рецептів</h3>
+                <p>Створіть свою першу колекцію для організації улюблених рецептів</p>
+                <button class="create-collection-btn" (click)="createNewCollection()">
+                  <span>➕</span> Створити колекцію
+                </button>
+              </div>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

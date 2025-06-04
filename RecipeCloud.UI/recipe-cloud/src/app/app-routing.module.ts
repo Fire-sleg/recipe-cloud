@@ -7,15 +7,11 @@ const routes: Routes = [
   { path: 'category/:transliteratedName', loadChildren: () => import('./modules/categories/category.module').then(m => m.CategoryModule) },
   { path: 'auth', loadChildren: () => import('./modules/auth/auth.module').then(m => m.AuthModule) },
   { path: 'recipes', loadChildren: () => import('./modules/recipes/recipes.module').then(m => m.RecipesModule) },
-  // { path: 'category/:transliteratedName', component: CategoryComponent },
+  { path: 'profile', loadChildren: () => import('./modules/user-profile/user.module').then(m => m.UserModule) },
   /*
-  ,
-  { path: 'auth', loadChildren: () => import('./modules/auth/auth.module').then(m => m.AuthModule) },
-  { path: 'recipes', loadChildren: () => import('./modules/recipes/recipes.module').then(m => m.RecipesModule) },
-  { path: 'profile', loadChildren: () => import('./modules/profile/profile.module').then(m => m.ProfileModule) },
+  
   { path: 'admin', loadChildren: () => import('./modules/admin/admin.module').then(m => m.AdminModule) },
-  { path: 'subscriptions-feed', loadChildren: () => import('./modules/subscriptions-feed/subscriptions-feed.module').then(m => m.SubscriptionsFeedModule) },
-  { path: 'notifications', loadChildren: () => import('./modules/notifications/notifications.module').then(m => m.NotificationsModule) }
+
 
   */
 ];

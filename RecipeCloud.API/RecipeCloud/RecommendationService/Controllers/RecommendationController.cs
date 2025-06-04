@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RecommendationService.Models;
 using RecommendationService.Services;
 using System.Security.Claims;
 
@@ -19,9 +20,9 @@ namespace RecommendationService.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<object>>> GetRecommendations(int limit = 6)
+        public async Task<ActionResult<List<RecipeDTO>>> GetRecommendations(int limit = 6)
         {
-            var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+            var userId = Guid.Parse(User.FindFirst("ident")?.Value);
             var recommendations = await _recommendationService.GetRecommendations(userId, limit);
             return Ok(recommendations);
         }

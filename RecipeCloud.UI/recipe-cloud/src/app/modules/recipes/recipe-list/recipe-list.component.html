@@ -1,11 +1,212 @@
-<div class="recipe-list">
-    <h2>Recipes</h2>
-    <button mat-raised-button color="primary" routerLink="/recipes/new" *ngIf="(isAuthenticated$ | async)">
-      Create New Recipe
-    </button>
-    <mat-grid-list cols="3" rowHeight="400px" gutterSize="20px">
-      <mat-grid-tile *ngFor="let recipe of recipes$ | async">
-        <app-recipe-card [recipe]="recipe"></app-recipe-card>
-      </mat-grid-tile>
-    </mat-grid-list>
+<div class="recipe-container">
+  <div class="row g-4">
+    <section class="col-3">
+      <div class="filter-sidebar">
+        <!-- Sort Section -->
+        <div class="filter-section">
+          <h5 class="filter-title">Сортування</h5>
+          <select class="form-select custom-select" (change)="onSortOrderChange($event)">
+            <option value="Alphabetical">За алфавітом</option>
+
+            <option value="CaloriesLowToHigh">Калорійність: ↑</option>
+            <option value="CaloriesHighToLow">Калорійність: ↓</option>
+
+            <option value="FatLowToHigh">Жири: ↑</option>
+            <option value="FatHighToLow">Жири: ↓</option>
+
+
+            <option value="CarbohydratesLowToHigh">Вуглеводи: ↑</option>
+            <option value="CarbohydratesHighToLow">Вуглеводи: ↓</option>
+
+
+            <option value="ProteinLowToHigh">Білок: ↑</option>
+            <option value="ProteinHighToLow">Білок: ↓</option>
+
+            <option value="CookingTimeLowToHigh">Час приготування: ↑</option>
+            <option value="CookingTimeHighToLow">Час приготування: ↓</option>
+          </select>
+        </div>
+        <!-- User Created Filter -->
+        <div class="filter-section">
+          <div class="filter-group">
+            <h5 class="filter-group-title">Автор</h5>
+            <div class="filter-options">
+              <div class="custom-checkbox">
+                <input class="checkbox-input" type="checkbox" 
+                       id="user-created" 
+                       [checked]="filters.isUserCreated"
+                       (change)="onFilterChange('isUserCreated', filters.isUserCreated, $event)">
+                <label class="checkbox-label" for="user-created">
+                  Створено користувачем
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Groups -->
+        <div class="filter-groups">
+          <!-- Allergens -->
+          <div class="filter-group">
+            <h5 class="filter-group-title">Алергени</h5>
+            <div class="filter-options">
+              <div class="custom-checkbox" *ngFor="let allergen of checkboxFilter?.allergens">
+                <input class="checkbox-input" type="checkbox" 
+                       [id]="'allergen-' + allergen" 
+                      [checked]="filters.allergens?.includes(allergen)"
+                       (change)="onFilterChange('allergens', allergen, $event)">
+                <label class="checkbox-label" [for]="'allergen-' + allergen">
+                  {{ allergen }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cuisines -->
+          <div class="filter-group">
+            <h5 class="filter-group-title">Кухні світу</h5>
+            <div class="filter-options">
+              <div class="custom-checkbox" *ngFor="let cuisine of checkboxFilter?.cuisines">
+                <input class="checkbox-input" type="checkbox" 
+                       [id]="'cuisine-' + cuisine" 
+                        [checked]="filters.cuisines?.includes(cuisine)"
+                       (change)="onFilterChange('cuisines', cuisine, $event)">
+                <label class="checkbox-label" [for]="'cuisine-' + cuisine">
+                  {{ cuisine }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Diets -->
+          <div class="filter-group">
+            <h5 class="filter-group-title">Дієти</h5>
+            <div class="filter-options">
+              <div class="custom-checkbox" *ngFor="let diet of checkboxFilter?.diets">
+                <input class="checkbox-input" type="checkbox" 
+                       [id]="'diet-' + diet" 
+                       [checked]="filters.diets?.includes(diet)"
+                       (change)="onFilterChange('diets', diet, $event)">
+                <label class="checkbox-label" [for]="'diet-' + diet">
+                  {{ diet }}
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tags -->
+          <!-- <div class="filter-group">
+            <h5 class="filter-group-title">Теги</h5>
+            <div class="filter-options">
+              <div class="custom-checkbox" *ngFor="let tag of checkboxFilter?.tags">
+                <input class="checkbox-input" type="checkbox" 
+                       [id]="'tag-' + tag" 
+                       (change)="onFilterChange('tags', tag, $event)">
+                <label class="checkbox-label" [for]="'tag-' + tag">
+                  {{ tag }}
+                </label>
+              </div>
+            </div>
+          </div> -->
+        </div>
+      </div>
+    </section>
+
+    <section class="col-9">
+      <div class="main-content">
+        <!-- Create Recipe Button -->
+        <div class="create-recipe-section" *ngIf="isAuthenticated">
+          <app-recipe-form [category]="category"></app-recipe-form>
+          <!-- <button 
+            type="button" 
+            class="btn btn-create-recipe" 
+            (click)="showCreateRecipeForm()"
+            
+            >
+            <i class="fas fa-plus"></i>
+            Створити рецепт
+          </button> -->
+        </div>
+        <!-- Search Controls -->
+        <div class="search-controls">
+          <div class="search-input-group">
+            <input type="text" 
+                   placeholder="Пошук рецептів..." 
+                   class="search-input" 
+                   [(ngModel)]="filters.name">
+            <button type="button" class="btn btn-search" (click)="loadRecipes()">
+              Пошук
+            </button>
+            <button type="button" class="btn btn-reset" (click)="resetFilters()">
+              Скинути
+            </button>
+            
+          </div>
+        </div>
+
+        <div *ngIf="category && recipes && recipes.length" >
+          <!-- Recipe Grid -->
+          <div class="recipes-grid" *ngIf="filteredRecipes.length">
+            <div class="recipe-card-wrapper" *ngFor="let recipe of filteredRecipes">
+              <app-recipe-item [recipe]="recipe" class="recipe-card"></app-recipe-item>
+            </div>
+          </div>
+
+          <div class="recipes-grid" *ngIf="!filteredRecipes.length">
+            <div class="recipe-card-wrapper" *ngFor="let recipe of recipes">
+              <app-recipe-item [recipe]="recipe" class="recipe-card"></app-recipe-item>
+            </div>
+          </div>
+
+          <!-- Pagination -->
+          <nav *ngIf="totalCount > pageSize" class="pagination-wrapper">
+            <ul class="custom-pagination">
+              <li class="page-item" [class.disabled]="pageNumber === 1">
+                <button class="page-btn prev-btn" 
+                        (click)="onPageChange(pageNumber - 1)" 
+                        [disabled]="pageNumber === 1">
+                  ← Попередня
+                </button>
+              </li>
+              <li class="page-item" 
+                  *ngFor="let page of getPaginationNumbers()" 
+                  [class.active]="page === pageNumber">
+                <button class="page-btn number-btn" 
+                        (click)="onPageChange(page)"
+                        [class.active]="page === pageNumber">
+                  {{ page }}
+                </button>
+              </li>
+              <li class="page-item" [class.disabled]="pageNumber === getMaxPage()">
+                <button class="page-btn next-btn" 
+                        (click)="onPageChange(pageNumber + 1)" 
+                        [disabled]="pageNumber === getMaxPage()">
+                  Наступна →
+                </button>
+              </li>
+            </ul>
+          </nav>
+
+        </div>
+        <!-- Loading State -->
+        <div class="loading-state" *ngIf="!category || !recipes || !recipes.length && !showNotFound">
+          <div class="loading-content">
+            <div class="spinner"></div>
+            <p>Завантаження рецептів...</p>
+          </div>
+        </div>
+        <!-- No Results State -->
+        <div *ngIf="!category || !recipes || !recipes.length && showNotFound" class="no-results">
+          <div class="no-results-content">
+            <h3>Рецепти не знайдені</h3>
+            <p>Спробуйте змінити параметри пошуку або фільтри</p>
+          </div>
+        </div>
+
+        
+      </div>
+    </section>
   </div>
+</div>
+
+

@@ -1,6 +1,7 @@
 import { Component } from '@angular/core';
 import { Category } from '../../../core/models/category.model';
 import { HomeService } from '../../../core/services/home.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 
 
@@ -10,11 +11,15 @@ import { HomeService } from '../../../core/services/home.service';
   styleUrl: './home.component.css'
 })
 export class HomeComponent {
+
   categories: Category[] = [];
 
-  constructor(private homeService: HomeService ) {}
+  isAuthenticated: boolean = false;
+
+  constructor(private homeService: HomeService, private authService: AuthService ) {}
 
   ngOnInit(): void {
+    this.isAuthenticated = this.authService.isAuthenticated();
     this.getBaseCategories();
   }
 

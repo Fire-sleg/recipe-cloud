@@ -1,0 +1,69 @@
+{
+  "info": {
+    "name": "RecipeCloud - Create Recipes",
+    "_postman_id": "c3d4e5f6-8901-b3c4-d5e6-789012345678",
+    "description": "Колекція для створення 5 рецептів на кожну підкатегорію в RecipeService українською мовою",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Create Recipes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[{\"title\": \"Тости з авокадо\", \"description\": \"Швидкий і здоровий сніданок із авокадо.\", \"ingredients\": [\"Хліб\", \"Авокадо\", \"Лимон\", \"Сіль\", \"Оливкова олія\"], \"cookingTime\": 10, \"difficulty\": \"Легкий\", \"diets\": [\"Веганський\", \"Здоровий\"], \"cuisine\": \"Міжнародна\", \"calories\": 250, \"protein\": 5, \"fat\": 15, \"carbohydrates\": 25, \"isPremium\": false, \"directions\": [\"Підсмажити хліб.\", \"Розім’яти авокадо з лимонним соком.\", \"Намазати на тости, посипати сіллю.\"], \"serving\": 2, \"categoryId\": \"{{QuickBreakfastsId}}\"},{\"title\": \"Гречані млинці\", \"description\": \"Легкі млинці для швидкого сніданку.\", \"ingredients\": [\"Гречане борошно\", \"Молоко\", \"Яйця\", \"Цукор\", \"Олія\"], \"cookingTime\": 15, \"difficulty\": \"Легкий\", \"diets\": [\"Вегетаріанський\"], \"cuisine\": \"Українська\", \"calories\": 300, \"protein\": 10, \"fat\": 12, \"carbohydrates\": 40, \"isPremium\": false, \"directions\": [\"Змішати борошно, молоко, яйця.\", \"Смажити млинці на сковороді.\", \"Подавати з медом.\"], \"serving\": 4, \"categoryId\": \"{{QuickBreakfastsId}}\"},{\"title\": \"Веганська вівсянка\", \"description\": \"Поживна каша з фруктами.\", \"ingredients\": [\"Вівсяні пластівці\", \"Мигдалеве молоко\", \"Банан\", \"Ягоди\", \"Мед\"], \"cookingTime\": 10, \"difficulty\": \"Легкий\", \"diets\": [\"Веганський\", \"Здоровий\"], \"cuisine\": \"Міжнародна\", \"calories\": 200, \"protein\": 5, \"fat\": 5, \"carbohydrates\": 35, \"isPremium\": false, \"directions\": [\"Зварити вівсянку на молоці.\", \"Додати банан і ягоди.\", \"Полити медом.\"], \"serving\": 1, \"categoryId\": \"{{VeganBreakfastsId}}\"},{\"title\": \"Тофу-скрамбл\", \"description\": \"Веганська альтернатива яєчні.\", \"ingredients\": [\"Тофу\", \"Куркума\", \"Цибуля\", \"Перець\", \"Олія\"], \"cookingTime\": 15, \"difficulty\": \"Легкий\", \"diets\": [\"Веганський\"], \"cuisine\": \"Міжнародна\", \"calories\": 220, \"protein\": 12, \"fat\": 10, \"carbohydrates\": 15, \"isPremium\": false, \"directions\": [\"Подрібнити тофу.\", \"Обсмажити з цибулею і спеціями.\", \"Подавати гарячим.\"], \"serving\": 2, \"categoryId\": \"{{VeganBreakfastsId}}\"},{\"title\": \"Сирники\", \"description\": \"Традиційні українські сирники.\", \"ingredients\": [\"Сир\", \"Яйця\", \"Борошно\", \"Цукор\", \"Олія\"], \"cookingTime\": 20, \"difficulty\": \"Середній\", \"diets\": [\"Вегетаріанський\"], \"cuisine\": \"Українська\", \"calories\": 350, \"protein\": 15, \"fat\": 20, \"carbohydrates\": 30, \"isPremium\": false, \"directions\": [\"Змішати сир із яйцями і борошном.\", \"Сформувати сирники.\", \"Смажити на олії.\"], \"serving\": 4, \"categoryId\": \"{{HeartyBreakfastsId}}\"},{\"title\": \"Яєчня з беконом\", \"description\": \"Ситний сніданок із яєць.\", \"ingredients\": [\"Яйця\", \"Бекон\", \"Сіль\", \"Перець\", \"Масло\"], \"cookingTime\": 15, \"difficulty\": \"Легкий\", \"diets\": [\"Невегетаріанський\"], \"cuisine\": \"Міжнародна\", \"calories\": 400, \"protein\": 20, \"fat\": 30, \"carbohydrates\": 5, \"isPremium\": false, \"directions\": [\"Обсмажити бекон.\", \"Додати яйця.\", \"Смажити до готовності.\"], \"serving\": 2, \"categoryId\": \"{{HeartyBreakfastsId}}\"},{\"title\": \"Грецький салат\", \"description\": \"Легкий салат із овочів.\", \"ingredients\": [\"Помідори\", \"Огірки\", \"Фета\", \"Оливки\", \"Оливкова олія\"], \"cookingTime\": 10, \"difficulty\": \"Легкий\", \"diets\": [\"Вегетаріанський\", \"Здоровий\"], \"cuisine\": \"Грецька\", \"calories\": 200, \"protein\": 8, \"fat\": 15, \"carbohydrates\": 10, \"isPremium\": false, \"directions\": [\"Нарізати овочі.\", \"Додати фету і оливки.\", \"Заправити олією.\"], \"serving\": 2, \"categoryId\": \"{{LightDishesId}}\"},{\"title\": \"Крем-суп із гарбуза\", \"description\": \"Ніжний суп для обіду.\", \"ingredients\": [\"Гарбуз\", \"Цибуля\", \"Вершки\", \"Сіль\", \"Спеції\"], \"cookingTime\": 30, \"difficulty\": \"Середній\", \"diets\": [\"Вегетаріанський\"], \"cuisine\": \"Міжнародна\", \"calories\": 250, \"protein\": 5, \"fat\": 10, \"carbohydrates\": 35, \"isPremium\": false, \"directions\": [\"Обсмажити цибулю.\", \"Додати гарбуз і варити.\", \"Подрібнити блендером.\"], \"serving\": 4, \"categoryId\": \"{{LightDishesId}}\"} // Додати решту рецептів для всіх підкатегорій (по 5 на кожну)]"
+        },
+        "url": {
+          "raw": "https://localhost:5051/api/recipes",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "5051",
+          "path": ["api", "recipes"]
+        },
+        "description": "Створює по 5 рецептів для кожної з 22 підкатегорій українською мовою."
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    { "key": "QuickBreakfastsId", "value": "a4547669-bd1d-41c6-9fd3-0f7cb52c7aa5" },
+    { "key": "VeganBreakfastsId", "value": "12656996-3ee4-479a-99aa-c94652a75e0a" },
+    { "key": "HeartyBreakfastsId", "value": "c919160b-42c0-4c81-b4f0-ac4f5f4654c1" },
+    
+    { "key": "LightDishesId", "value": "59470df0-3798-408d-b91b-0fd298b8ac10" },
+    { "key": "HeartyDishesId", "value": "c42e4fef-14f8-4455-bd25-d8267db5d65f" },
+    { "key": "QuickDinnersId", "value": "42c7dbc1-3f58-4a5c-9a15-a2582ad42f96" },
+    
+    { "key": "LightDessertsId", "value": "81921aec-0439-419a-85f9-f7e59bb444f5" },
+    { "key": "BakedGoodsId", "value": "3210a1bc-1f6e-442d-8c1e-190396c68f11" },
+    { "key": "SugarFreeId", "value": "9e405764-a359-4e24-9df7-92a44921bee0" },
+
+    { "key": "VeganId", "value": "5b4cdcfd-6145-40cd-8b7b-aba338850fad" },
+    { "key": "GlutenFreeId", "value": "ebe04978-0946-4d4c-8656-893e35617029" },
+    { "key": "KetoId", "value": "be5d67ae-4cc9-4876-b397-6264f63236b7" },
+    { "key": "AllergenFreeId", "value": "e0bae841-abd0-4758-893c-097ab1f5ad4f" },
+
+    { "key": "EuropeanId", "value": "02134de3-3ec7-4e4c-a035-652036bccafc" },
+    { "key": "AsianId", "value": "bb1b9cf9-4ac8-4c5e-a450-1e278eb4f032" },
+    { "key": "UkrainianId", "value": "80fac5f8-f2dd-4e45-a5bb-89ba1ad5ef64" },
+    { "key": "LatinAmericanId", "value": "07f7e8d4-f96a-48f0-858f-a6061aa00228" },
+
+    { "key": "ChristmasNewYearId", "value": "89c564ed-a987-4175-8c00-59351445102d" },
+    { "key": "EasterId", "value": "b1fc40ed-5f44-4dd3-b991-cdbbfdd89f9f" },
+    { "key": "BirthdaysId", "value": "d420b20f-1c69-4d35-af7e-eb2c65806188" },
+
+    { "key": "HealthySnacksId", "value": "d9d8429e-7066-4eeb-bfdb-3eb7d7a50ff7" },
+    { "key": "SweetSnacksId", "value": "f9261c53-aff0-4aa4-94b4-65f19768f395" },
+    { "key": "PartyAppetizersId", "value": "82b820ba-e6f1-41dd-93f4-d22a4a3daf64" }
+   ]
+
+}
+
+

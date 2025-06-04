@@ -49,6 +49,7 @@ builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IBreadcrumbRepository, BreadcrumbRepository>();
 builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
+builder.Services.AddScoped<IRecipeRatingRepository, RecipeRatingRepository>();
 
 builder.Services.AddScoped<IMinIOService, MinIOService>();
 
@@ -154,6 +155,12 @@ var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
 {
+    using (var scope = app.Services.CreateScope())
+    {
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        //await dbContext.Database.EnsureDeletedAsync(); // Delete existing database
+        await dbContext.Database.MigrateAsync(); // Reapply migrations
+    }
     app.UseSwagger();
     app.UseSwaggerUI();
 }

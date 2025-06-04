@@ -21,14 +21,14 @@ namespace AuthService.Data.Models.RequestModels
 
         //[Required(ErrorMessage = ErrorMessages.FirstNasmeRequired)]
         //[MaxLength(25, ErrorMessage = ErrorMessages.MaxNamesLength)]
-        public string FirstName { get; set; }
+        //public string FirstName { get; set; }
 
-        //[Required(ErrorMessage = ErrorMessages.LastNameRequired)]
-        //[MaxLength(25, ErrorMessage = ErrorMessages.MaxNamesLength)]
-        public string LastName { get; set; }
+        ////[Required(ErrorMessage = ErrorMessages.LastNameRequired)]
+        ////[MaxLength(25, ErrorMessage = ErrorMessages.MaxNamesLength)]
+        //public string LastName { get; set; }
 
-        //[Required(ErrorMessage = ErrorMessages.MidleNameRequired)]
-        //[MaxLength(25, ErrorMessage = ErrorMessages.MaxNamesLength)]
-        public string MiddleName { get; set; }
+        ////[Required(ErrorMessage = ErrorMessages.MidleNameRequired)]
+        ////[MaxLength(25, ErrorMessage = ErrorMessages.MaxNamesLength)]
+        //public string MiddleName { get; set; }
     }
 }

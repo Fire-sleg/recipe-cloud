@@ -5,6 +5,8 @@ using RecipeService.Models.Collections;
 using RecipeService.Models.Collections.DTOs;
 using RecipeService.Models.Recipes;
 using RecipeService.Models.Recipes.DTOs;
+using RecipeService.Models.Rating;
+using RecipeService.Models.Rating.DTOs;
 
 namespace RecipeService
 {
@@ -26,6 +28,7 @@ namespace RecipeService
             CreateMap<Category, CategoryCreateDTO>().ReverseMap();
             CreateMap<Category, CategoryUpdateDTO>().ReverseMap();
 
+            CreateMap<RecipeRating, RecipeRatingDTO>().ReverseMap();
         }
 
     }
