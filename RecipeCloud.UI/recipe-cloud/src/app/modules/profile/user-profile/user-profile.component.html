@@ -40,7 +40,7 @@
 
       <!-- Main Content -->
       <div class="profile-main">
-        <!-- Preferences Tab -->
+        <!-- Preferences Tab app-preferances-->
         <div *ngIf="activeTab === 'preferences'" class="tab-content">
           <form [formGroup]="profileForm" (ngSubmit)="onSubmit()" class="profile-form">
             <!-- Diets Section -->
@@ -148,7 +148,7 @@
           </form>
         </div>
 
-        <!-- Created Recipes Tab -->
+        <!-- Created Recipes Tab app-recipes-->
         <div *ngIf="activeTab === 'recipes'" class="tab-content">
           <div class="recipes-section">
             <div class="section-header">
@@ -196,7 +196,7 @@
           </div>
         </div>
 
-        <!-- Recipe Collections Tab -->
+        <!-- Recipe Collections Tab app-collections-->
         <div *ngIf="activeTab === 'collections'" class="tab-content">
           <div class="collections-section">
             <div class="section-header">
@@ -205,9 +205,7 @@
                 Мої колекції рецептів
               </h2>
               <p class="section-description">Організуйте улюблені рецепти у тематичні колекції</p>
-              <button class="create-collection-btn" (click)="createNewCollection()">
-                <span>➕</span> Створити колекцію
-              </button>
+              
             </div>
             
             <div class="collections-grid" *ngIf="userCollections.length > 0; else noCollections">

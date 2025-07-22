@@ -6,18 +6,24 @@ import { User } from '../models/user.model';
 import { tap } from 'rxjs/operators';
 import { UserPreferences } from '../models/user-preferences.model';
 import { ViewHistory } from '../models/view-history.model';
+import { JwtHelperService } from '@auth0/angular-jwt';
+import { Router } from '@angular/router';
+
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
+  // private isAuthenticatedSubject = new BehaviorSubject<boolean>(false);
+  // public isAuthenticated$: Observable<boolean> = this.isAuthenticatedSubject.asObservable();
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {
+  constructor(private http: HttpClient, private router: Router) {
     const user = localStorage.getItem('user');
     if (user) {
-      this.currentUserSubject.next(JSON.parse(user));
+      this.checkTokenValidityOnInit(user);
+      // this.currentUserSubject.next(JSON.parse(user));
     }
   }
 
@@ -79,6 +85,7 @@ export class AuthService {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     this.currentUserSubject.next(null);
+    this.router.navigate(['/login']);
   }
 
   setUser(user: User, token: string): void {
@@ -98,5 +105,30 @@ export class AuthService {
   isAdmin(): boolean {
     const user = this.currentUserSubject.value;
     return user?.isAdmin || false;
+  }
+
+
+
+  isTokenValid(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+
+    try {
+      const helper = new JwtHelperService();
+      const decoded = helper.decodeToken(token);
+      const currentTime = Math.floor(Date.now() / 1000);
+      return decoded.exp ? decoded.exp > currentTime : false;
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return false;
+    }
+  }
+
+  private checkTokenValidityOnInit(user: string): void {
+    if (this.isTokenValid()) {
+      this.currentUserSubject.next(JSON.parse(user));
+    } else {
+      this.logout();
+    }
   }
 }

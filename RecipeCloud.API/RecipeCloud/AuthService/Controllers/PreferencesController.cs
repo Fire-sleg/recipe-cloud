@@ -10,7 +10,7 @@ using System.Security.Claims;
 
 namespace AuthService.Controllers
 {
-    //[Authorize]
+    [Authorize]
     [ApiController]
     [Route("api/preferences")]
     public class PreferencesController : ControllerBase
@@ -30,7 +30,7 @@ namespace AuthService.Controllers
         public async Task<IActionResult> Get(Guid userId)
         {
             //var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            if (userId == null) return Unauthorized();
+            if (userId == Guid.Empty) return Unauthorized();
 
             var prefs = await _repo.GetByUserIdAsync(userId);
             //if (prefs == null) return NotFound();

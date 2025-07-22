@@ -25,7 +25,7 @@ services:
     volumes:
       - postgres-recipe-data:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      - "5434:5432"
     networks:
       - recipecloud-network
     restart: unless-stopped

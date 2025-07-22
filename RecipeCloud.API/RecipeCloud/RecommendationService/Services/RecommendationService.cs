@@ -3,10 +3,12 @@ using System;
 using StackExchange.Redis;
 using RecommendationService.Models;
 using System.Net.Http.Headers;
+using Microsoft.ML.Trainers;
+using Microsoft.ML;
 
 namespace RecommendationService.Services
 {
-    public class RecommendationMainService
+    public class RecommendationMainService : IRecommendationService
     {
         private readonly HttpClient _httpClient;
         private readonly IDatabase _redis;
@@ -35,7 +37,6 @@ namespace RecommendationService.Services
             _contextualService = contextualService;
             _userServiceUrl = config["ServiceUrls:UserService"];
             _recipeServiceUrl = config["ServiceUrls:RecipeService"];
-            _collectionServiceUrl = config["ServiceUrls:CollectionService"];
             _httpContextAccessor = httpContextAccessor;
 
             var token = _httpContextAccessor.HttpContext?.Request.Headers["Authorization"].FirstOrDefault();
@@ -47,54 +48,27 @@ namespace RecommendationService.Services
 
         }
 
-        public async Task<List<RecipeDTO>> GetRecommendations(Guid userId, int limit = 6)
+        public async Task<RecommendationResult> GetRecommendations(Guid userId, int limit = 6)
         {
-            //_userServiceUrl = "https://localhost:5050"; 
-            //_recipeServiceUrl = "https://localhost:5051";
-
-
             // 1. Перевірити кеш
             var cacheKey = $"recommendations:user:{userId}";
             var cached = await _redis.StringGetAsync(cacheKey);
 
-
-
             if (cached.HasValue)
-                return JsonSerializer.Deserialize<List<RecipeDTO>>(cached);
+                return new RecommendationResult { Recommendations = JsonSerializer.Deserialize<List<RecipeDTO>>(cached), Metrics = null };
 
             // 2. Отримати уподобання
-            Console.WriteLine($"{_userServiceUrl}/api/preferences/{userId}");
-
-
             var preferences = await _httpClient.GetFromJsonAsync<UserPreferences>(
                 $"{_userServiceUrl}/api/preferences/{userId}") ?? new UserPreferences { UserId = userId };
-            //_userServiceUrl
+
             // 3. Отримати рекомендації
             var contentBased = await _contentBasedService.GetContentBasedRecommendations(userId, preferences);
             var collaborative = await _collaborativeService.GetCollaborativeRecommendations(userId);
-
-
-
-            //var contextual = await _contextualService.GetContextualRecommendations(preferences);
-
-
-
-            //var popularRecipes = await _httpClient.GetFromJsonAsync<List<RecipeDTO>>(
-            //    $"{_recipeServiceUrl}/api/recipes?sort=popular&limit={limit / 2}");
-            //var popularCollections = await _httpClient.GetFromJsonAsync<List<CollectionDTO>>(
-            //    $"{_collectionServiceUrl}/api/collections?sort=popular&limit={limit / 2}");
 
             // 4. Об’єднати та ранжувати
             var allItems = contentBased
                 .Cast<RecipeDTO>()
                 .Concat(collaborative.Cast<RecipeDTO>())
-
-
-                //.Concat(contextual.Cast<object>())
-
-
-                //.Concat(popularRecipes.Cast<object>())
-                //.Concat(popularCollections.Cast<object>())
                 .GroupBy(i => (i as dynamic).Id)
                 .Select(g => g.First())
                 .ToList();
@@ -103,60 +77,140 @@ namespace RecommendationService.Services
                 .Take(limit)
                 .ToList();
 
-            if (rankedItems.Count < limit)
+            // 5. Кешувати та повернути
+            var recommendationMetrics = CalculateRecommendationMetrics(rankedItems, userId, preferences);
+            Dictionary<string, double> metrics = recommendationMetrics.Result;
+
+            await _redis.StringSetAsync(cacheKey, JsonSerializer.Serialize(rankedItems), TimeSpan.FromHours(1)); //TimeSpan.FromHours(1)
+            return new RecommendationResult() { Recommendations = rankedItems, Metrics = metrics };
+        }
+
+        private async Task<Dictionary<string, double>> CalculateRecommendationMetrics(
+            List<RecipeDTO> recommendations, Guid userId, UserPreferences preferences)
+        {
+            var metrics = new Dictionary<string, double>();
+
+            try
             {
-                var list = new List<RecipeDTO>();
-                var seenRecipeIds = new HashSet<Guid>();
+                metrics["Diversity"] = CalculateIntraListDiversity(recommendations);
+                metrics["Personalization"] = CalculatePersonalization(recommendations, preferences);
+                metrics["ContentRelevance"] = CalculateContentRelevance(recommendations, preferences);
 
-                var remaining = limit - rankedItems.Count;
+                return metrics;
+            }
+            catch
+            {
+                return new Dictionary<string, double> { ["Error"] = 1.0 };
+            }
+        }
 
-                var viewHistory = await _httpClient.GetFromJsonAsync<List<ViewHistoryDTO>>(
-                    $"{_userServiceUrl}/api/view-history/{remaining * 2}"); // запитуємо більше, бо можуть бути дублікати
+        private double CalculateIntraListDiversity(List<RecipeDTO> recommendations)
+        {
+            if (recommendations.Count < 2) return 0;
 
-                foreach (var view in viewHistory.Where(v => v.RecipeId != Guid.Empty))
+            double totalDistance = 0;
+            int pairCount = 0;
+
+            for (int i = 0; i < recommendations.Count; i++)
+            {
+                for (int j = i + 1; j < recommendations.Count; j++)
                 {
-                    if (list.Count >= remaining) break;
-                    if (seenRecipeIds.Contains(view.RecipeId)) continue;
-
-                    var apiResponse = await _httpClient.GetFromJsonAsync<APIResponse<RecipeDTO>>(
-                        $"{_recipeServiceUrl}/api/recipes/{view.RecipeId}");
-
-                    var recipe = apiResponse?.Result;
-
-                    if (recipe != null && !seenRecipeIds.Contains(recipe.Id))
-                    {
-                        seenRecipeIds.Add(recipe.Id);
-                        list.Add(recipe);
-                    }
+                    totalDistance += CalculateRecipeDistance(recommendations[i], recommendations[j]);
+                    pairCount++;
                 }
-
-                rankedItems.AddRange(list);
             }
 
+            return pairCount > 0 ? totalDistance / pairCount : 0;
+        }
 
-            // 5. Кешувати та повернути
-            await _redis.StringSetAsync(cacheKey, JsonSerializer.Serialize(rankedItems), TimeSpan.FromHours(1));
-            return rankedItems;
+        private double CalculateRecipeDistance(RecipeDTO recipe1, RecipeDTO recipe2)
+        {
+            double distance = 0;
+
+            // Оновлені ваги для відстані
+            if (recipe1.CategoryId != recipe2.CategoryId) distance += 0.25;
+            if (recipe1.Cuisine != recipe2.Cuisine) distance += 0.25;
+
+            var timeDiff = Math.Abs(recipe1.CookingTime - recipe2.CookingTime);
+            distance += Math.Min(timeDiff / 60.0, 1.0) * 0.15;
+
+            var ingredients1 = recipe1.Ingredients?.ToHashSet() ?? new HashSet<string>();
+            var ingredients2 = recipe2.Ingredients?.ToHashSet() ?? new HashSet<string>();
+            if (ingredients1.Any() || ingredients2.Any())
+            {
+                var intersection = ingredients1.Intersect(ingredients2).Count();
+                var union = ingredients1.Union(ingredients2).Count();
+                distance += (union > 0 ? 1.0 - (double)intersection / union : 1.0) * 0.35;
+            }
+
+            return Math.Min(distance, 1.0);
+        }
+        
+        private double CalculatePersonalization(List<RecipeDTO> recommendations, UserPreferences preferences)
+        {
+            if (!recommendations.Any()) return 0;
+
+            double totalScore = recommendations.Average(r => CalculateRecipeRelevanceScore(r, preferences));
+            return Normalize(totalScore, 0, 1);
+        }
+
+        private double CalculateContentRelevance(List<RecipeDTO> recommendations, UserPreferences preferences)
+        {
+            if (!recommendations.Any()) return 0;
+
+            return recommendations.Average(r => CalculateRecipeRelevanceScore(r, preferences));
+        }
+
+        private double CalculateRecipeRelevanceScore(RecipeDTO recipe, UserPreferences preferences)
+        {
+            double score = 0;
+            double maxScore = 1.0;
+
+            // Оновлені ваги для релевантності
+            if (preferences.FavoriteCuisines?.Contains(recipe.Cuisine) == true)
+                score += 0.5;
+
+            if (preferences.DietaryPreferences?.Any() == true)
+            {
+                var satisfiedRestrictions = preferences.DietaryPreferences
+                    .Count(restriction => recipe.Diets?.Contains(restriction) == true);
+                score += (double)satisfiedRestrictions / preferences.DietaryPreferences.Count * 0.5;
+            }
+            else
+            {
+                score += 0.5;
+            }
+
+            return score / maxScore;
+        }
+        private async Task<List<RecipeRating>> GetUserRatings(Guid userId)
+        {
+            try
+            {
+                return await _httpClient.GetFromJsonAsync<List<RecipeRating>>(
+                    $"{_recipeServiceUrl}/api/rating/get-user-ratings") ?? new List<RecipeRating>();
+            }
+            catch
+            {
+                return new List<RecipeRating>();
+            }
         }
 
         private List<RecipeDTO> RankItems(List<RecipeDTO> items, UserPreferences preferences)
         {
             var ranked = new List<(RecipeDTO Item, double Score)>();
-            var now = DateTime.UtcNow;
-            var isMorning = now.Hour >= 6 && now.Hour < 12;
             var userTags = preferences.DietaryPreferences.Concat(preferences.FavoriteCuisines).ToList();
 
             foreach (var item in items)
             {
                 double score = 0;
-                //var tags = (item as dynamic).Tags as List<string>;
-                //var categoryName = (item as dynamic).CategoryName as string;
+                var tags = new List<string>() { item.Cuisine };
+                tags.AddRange(item.Diets);
                 var viewCount = (int)(item as dynamic).ViewCount;
                 var averageRating = (item as dynamic).AverageRating as double? ?? 0;
 
-                //score += CalculateCosineSimilarity(userTags, tags) * RecommendationConfig.ContentBasedWeight;
+                score += CalculateCosineSimilarity(userTags, tags) * RecommendationConfig.ContentBasedWeight;
                 score += Normalize(averageRating) * RecommendationConfig.CollaborativeWeight;
-                //if (isMorning && categoryName == "Breakfast") score += RecommendationConfig.ContextualWeight;
                 score += Normalize(viewCount) * RecommendationConfig.PopularityWeight;
 
                 ranked.Add((item, score));
@@ -179,4 +233,5 @@ namespace RecommendationService.Services
             return Math.Max(0, Math.Min(1, (value - min) / (max - min)));
         }
     }
+
 }

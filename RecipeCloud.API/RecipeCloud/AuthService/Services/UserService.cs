@@ -6,7 +6,7 @@ using AuthService.Models;
 
 namespace AuthService.Services
 {
-    public class UserService
+    public class UserService : IUserService
     {
         private readonly UserManager<ApplicationUser> _userManager;
         private readonly JWTService _jwtService;
@@ -25,7 +25,7 @@ namespace AuthService.Services
                 {
                     UserName = "admin@recipecloud.com",
                     Email = "admin@recipecloud.com",
-                    Password = "AdminRecipeCloud!123"
+                    Password = "******************"
                 };
                 var user = await _userManager.FindByEmailAsync(admin.Email);
                 if (user == null)

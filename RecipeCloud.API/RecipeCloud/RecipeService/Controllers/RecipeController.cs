@@ -43,6 +43,13 @@ namespace RecipeService.Controllers
             _createValidator = createValidator;
             _updateValidator = updateValidator;
         }
+        [HttpGet("count")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<IActionResult> GetRecipesCountAsync()
+        {
+            var count = await _dbRecipe.CountAsync();
+            return Ok(count); 
+        }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
@@ -76,11 +83,11 @@ namespace RecipeService.Controllers
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<APIResponse>> GetAsync(Guid id)
+        public async Task<ActionResult<APIResponse>> GetRecipeByIdAsync(Guid id)
         {
             try
             {
-                if (id == null)
+                if (id == Guid.Empty)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
                     _response.IsSuccess = false;
@@ -407,7 +414,7 @@ namespace RecipeService.Controllers
                     return NotFound($"Recipe with id {id} not found");
                 }
 
-                return Ok(new { message = "View count incremented successfully" });
+                return Ok("View count incremented successfully");
             }
             catch (Exception ex)
             {
@@ -428,7 +435,9 @@ namespace RecipeService.Controllers
             var list = await _dbRecipe.FilterRecipesAsync(filterDto, paginationParams, sortOrder);
             var recipes = _mapper.Map<List<RecipeDTO>>(list);
 
-            var totalCount = await _dbRecipe.CountAsync(); // Assuming CountAsync is implemented in the repository
+            var filterExpression = _dbRecipe.GetFilterExpression(filterDto);
+
+            var totalCount = await _dbRecipe.CountAsync(filterExpression);
             var pagedResponse = new PagedResponse<RecipeDTO>(recipes, totalCount, paginationParams.PageNumber, paginationParams.PageSize);
 
             return Ok(pagedResponse);

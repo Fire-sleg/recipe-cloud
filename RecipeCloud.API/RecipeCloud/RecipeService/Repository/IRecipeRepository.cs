@@ -16,6 +16,7 @@ namespace RecipeService.Repository
         Task SaveAsync();
         Task<int> CountAsync(Expression<Func<Recipe, bool>>? filter = null);
         Task<List<Recipe>> FilterRecipesAsync(RecipeFilterDTO filterDto, PaginationParams? paginationParams = null, string? sortOrder = null);
+        Expression<Func<Recipe, bool>> GetFilterExpression(RecipeFilterDTO filterDto);
         Task<bool> IncrementViewCountAsync(Guid recipeId);
     }
 }

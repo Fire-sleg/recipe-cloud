@@ -50,11 +50,7 @@ export class RecipeFilterComponent implements OnInit {
 
     this.categoryService.getCategoryByTransliteratedName(transliteratedName).subscribe({
       next: (data: Category) => {
-        
-
         this.category = data;
-        debugger
-        // TODO: Можна завантажити рецепти тут
       },
       error: err => {
         console.error('Не вдалося завантажити категорію', err);

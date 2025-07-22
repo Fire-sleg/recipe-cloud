@@ -36,7 +36,6 @@ export class CategoryComponent implements OnInit {
 
   loadCategoryDetails(transliteratedName: string): void {
     this.categoryService.getCategoryByTransliteratedName(transliteratedName).subscribe(data => {
-      debugger;
       this.category = data;
       if(!this.category?.subCategories?.length){
         this.router.navigate(['recipes', this.categoryTransliteratedName]);

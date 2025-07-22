@@ -21,7 +21,10 @@
 
 
 <div class="card h-100 shadow-sm bg-white border-0" *ngIf="recipe" style="box-shadow: 0 2px 8px rgba(245, 245, 220, 0.3);">
-    <a class="text-decoration-none" [routerLink]="['/recipes','detail', recipe.transliteratedName]">
+    <a *ngIf="recipe.transliteratedName === 'hrechani-mlyntsi'" class="text-decoration-none" [routerLink]="['/recipes','detail', recipe.transliteratedName]">
+        <img src="assets/hrechani-mlyntsi.webp" alt="{{recipe.title}}" class="img-fluid p-4 rounded-top" (error)="onImageError($event)">
+    </a>
+    <a *ngIf="recipe.transliteratedName !== 'hrechani-mlyntsi'" class="text-decoration-none" [routerLink]="['/recipes','detail', recipe.transliteratedName]">
         <img src="{{recipe.imageUrl}}" alt="{{recipe.title}}" class="img-fluid p-4 rounded-top" (error)="onImageError($event)">
     </a>
 

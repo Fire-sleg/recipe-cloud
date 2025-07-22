@@ -142,6 +142,14 @@ namespace RecipeService.Repository
             return await query.CountAsync();
         }
 
+        public Expression<Func<Recipe, bool>> GetFilterExpression(RecipeFilterDTO filterDto)
+        {
+            return recipe =>
+                (string.IsNullOrEmpty(filterDto.Title) || recipe.Title.Contains(filterDto.Title)) &&
+                (filterDto.CategoryId == null || recipe.CategoryId == filterDto.CategoryId);
+        }
+
+
         public async Task<bool> IncrementViewCountAsync(Guid recipeId)
         {
             var recipe = await _db.Recipes.FindAsync(recipeId);

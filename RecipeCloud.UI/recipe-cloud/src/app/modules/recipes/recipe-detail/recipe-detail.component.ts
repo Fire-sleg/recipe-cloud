@@ -27,7 +27,7 @@ export class RecipeDetailComponent implements OnInit {
 
   onImageError(event: Event): void {
     const img = event.target as HTMLImageElement;
-    img.src = 'assets/temp.jpg';
+    img.src = 'assets/hrechani-mlyntsi.webp';
   }
 
   constructor(
@@ -145,10 +145,13 @@ export class RecipeDetailComponent implements OnInit {
     }
 
     if (this.recipe?.id) {
+          debugger;
+
       this.recipeService.rateRecipe(this.recipe.id, rating).subscribe({
         next: (response) => {
           this.userRating = rating;
           this.isRatingSubmitted = true;
+          
           
           // Update recipe's average rating
           if (this.recipe && response.averageRating !== undefined) {

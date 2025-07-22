@@ -1,0 +1,47 @@
+<div class="recipes-section">
+  <div class="section-header">
+    <h2 class="section-title">
+      <span class="section-icon">👨‍🍳</span>
+      Мої створені рецепти
+    </h2>
+    <p class="section-description">Рецепти, які ви створили та додали до системи</p>
+  </div>
+  
+  <div class="recipes-grid" *ngIf="recipes.length > 0; else noRecipes">
+    <div *ngFor="let recipe of recipes" class="recipe-card">
+      <div class="recipe-image">
+        <img [src]="recipe.imageUrl || '/assets/default-recipe.jpg'" [alt]="recipe.title">
+      </div>
+      <div class="recipe-info">
+        <h3 class="recipe-name">{{ recipe.title }}</h3>
+        <p class="recipe-description">{{ recipe.description }}</p>
+        <div class="recipe-meta">
+          <span class="recipe-time">⏱️ {{ recipe.cookingTime }} хв</span>
+          <span class="recipe-difficulty">📊 {{ recipe.difficulty }}</span>
+        </div>
+        <div class="recipe-actions">
+          <button class="action-btn view" (click)="viewRecipe(recipe.id)">
+            <span>👁️</span> Переглянути
+          </button>
+          <button class="action-btn edit" (click)="editRecipe(recipe.id)">
+            <span>✏️</span> Редагувати
+          </button>
+          <button class="action-btn delete" (click)="deleteRecipe(recipe.id)">
+            <span>🗑️</span> Видалити
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <ng-template #noRecipes>
+    <div class="empty-state">
+      <div class="empty-icon">👨‍🍳</div>
+      <h3>Ви ще не створили жодного рецепту</h3>
+      <p>Почніть створювати власні кулінарні шедеври!</p>
+      <button class="create-recipe-btn" (click)="createNewRecipe()">
+        <span>➕</span> Створити рецепт
+      </button>
+    </div>
+  </ng-template>
+</div>

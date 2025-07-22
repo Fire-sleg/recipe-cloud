@@ -12,9 +12,9 @@ namespace RecommendationService.Controllers
     [Authorize]
     public class RecommendationController : ControllerBase
     {
-        private readonly RecommendationMainService _recommendationService;
+        private readonly IRecommendationService _recommendationService;
 
-        public RecommendationController(RecommendationMainService recommendationService)
+        public RecommendationController(IRecommendationService recommendationService)
         {
             _recommendationService = recommendationService;
         }
@@ -24,7 +24,16 @@ namespace RecommendationService.Controllers
         {
             var userId = Guid.Parse(User.FindFirst("ident")?.Value);
             var recommendations = await _recommendationService.GetRecommendations(userId, limit);
-            return Ok(recommendations);
+            if (recommendations.Metrics != null)
+            {
+                foreach (var pair in recommendations.Metrics)
+                {
+                    Console.WriteLine($"{pair.Key}: {pair.Value}");
+                }
+            }
+            
+
+            return Ok(recommendations.Recommendations);
         }
     }
 }

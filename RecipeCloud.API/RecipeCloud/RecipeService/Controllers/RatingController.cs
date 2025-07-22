@@ -39,7 +39,7 @@ namespace RecipeService.Controllers
 
                 if (result)
                 {
-                    return Ok(new { message = "Rating submitted successfully" });
+                    return Ok( new { message = "Rating submitted successfully" });
                 }
 
                 return BadRequest("Failed to submit rating");

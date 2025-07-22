@@ -18,9 +18,9 @@ namespace AuthService.Controllers
     public class AuthController : ControllerBase
     {
         
-        private readonly UserService _userservice;
+        private readonly IUserService _userservice;
         private readonly UserManager<ApplicationUser> _userManager;
-        public AuthController(UserService userManagementService, UserManager<ApplicationUser> userManager)
+        public AuthController(IUserService userManagementService, UserManager<ApplicationUser> userManager)
         {
             _userservice = userManagementService;
             _userManager = userManager;

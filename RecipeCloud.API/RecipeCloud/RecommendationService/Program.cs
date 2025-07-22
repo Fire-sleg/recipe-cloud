@@ -35,6 +35,7 @@ builder.Services.AddScoped<CollaborativeRecommendationService>();
 builder.Services.AddScoped<ContentBasedRecommendationService>();
 builder.Services.AddScoped<ContextualRecommendationService>();
 builder.Services.AddScoped<RecommendationMainService>();
+builder.Services.AddScoped<IRecommendationService, RecommendationMainService>();
 
 // Add services to the container.
 

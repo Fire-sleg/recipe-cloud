@@ -1,11 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, FormControl } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-import { AuthService } from '../../core/services/auth.service';
-import { UserProfile } from '../../core/models/user-profile.model';
-import { UserPreferences } from '../../core/models/user-preferences.model';
-import { Collection } from '../../core/models/collection.model';
-import { Recipe } from '../../core/models/recipe.model';
+import { AuthService } from '../../../core/services/auth.service';
+import { UserProfile } from '../../../core/models/user-profile.model';
+import { UserPreferences } from '../../../core/models/user-preferences.model';
+import { Collection } from '../../../core/models/collection.model';
+import { Recipe } from '../../../core/models/recipe.model';
 
 
 @Component({
@@ -22,14 +22,21 @@ export class UserProfileComponent implements OnInit {
 
   // Available options for form
   availableDiets: string[] = [
-    'Вегетаріанська',
-    'Веганська', 
-    'Безглютенова',
-    'Кето',
-    'Палео',
-    'Середземноморська',
-    'Дієта DASH',
-    'Низьковуглеводна'
+    // 'Вегетаріанська',
+    // 'Веганська', 
+    // 'Безглютенова',
+    // 'Кето',
+    // 'Палео',
+    // 'Середземноморська',
+    // 'Дієта DASH',
+    // 'Низьковуглеводна'
+    "Вегетаріанський",
+    "Без глютену",
+    "Без цукру",
+    "Кето",
+    "Здоровий",
+    "Веганський",
+    "Невегетаріанський"
   ];
 
   availableAllergens: string[] = [
@@ -39,24 +46,30 @@ export class UserProfileComponent implements OnInit {
     'Морепродукти',
     'Горіхи дерев',
     'Арахіс',
-    'Пшениця/Глютен',
+    'Глютен',
     'Соя',
     'Кунжут'
   ];
 
   availableCuisines: string[] = [
-    'Українська',
-    'Італійська',
-    'Французька',
-    'Японська',
-    'Китайська',
-    'Індійська',
-    'Мексиканська',
-    'Грецька',
-    'Тайська',
-    'Американська',
-    'Німецька',
-    'Іспанська'
+    // 'Українська',
+    // 'Італійська',
+    // 'Французька',
+    // 'Японська',
+    // 'Китайська',
+    // 'Індійська',
+    // 'Мексиканська',
+    // 'Грецька',
+    // 'Тайська',
+    // 'Американська',
+    // 'Німецька',
+    // 'Іспанська'
+    "Латиноамериканська",
+    "Європейська",
+    "Міжнародна",
+    "Грецька",
+    "Азійська",
+    "Українська"
   ];
 
   constructor(private fb: FormBuilder, private authService: AuthService) {}

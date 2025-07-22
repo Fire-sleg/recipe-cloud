@@ -47,9 +47,10 @@ export class RecipeListComponent  implements OnInit  {
   constructor(private recipeService: RecipeService, private authService: AuthService, private route: ActivatedRoute, private router: Router){}
 
   ngOnInit(): void {    
-    debugger;
+
+
     this.isAuthenticated = this.authService.isAuthenticated();
-    this.filters["categoryId"] =this.category?.id;
+    this.filters["categoryId"] = this.category?.id;
     this.getCheckboxFilter();
     // this.setPreferencesFromStorage();
     // this.loadRecipes();
@@ -113,8 +114,8 @@ export class RecipeListComponent  implements OnInit  {
       this.recipeService.getCheckboxFilter(this.category.id).subscribe((filter: CheckboxFilter) => {
         
         this.checkboxFilter = filter;
-        this.setPreferencesFromStorage(); // 👈 викликаємо тут!
-        this.loadRecipes(); // 👈 вже з урахуванням фільтрів
+        //this.setPreferencesFromStorage(); 
+        this.loadRecipes(); 
       });
     }
   }
@@ -185,7 +186,6 @@ export class RecipeListComponent  implements OnInit  {
 
   onFilterChange(attributeName: string, attributeValue: string, event: any): void {
     const checked = event?.target?.checked;
-    debugger;
   
     if (attributeName && attributeValue !== undefined && attributeValue !== null) {
       if (attributeName === "isUserCreated") {
@@ -263,7 +263,4 @@ export class RecipeListComponent  implements OnInit  {
 
 }
 
-function smartSearch(name: any, data: any): Recipe[] {
-  throw new Error('Function not implemented.');
-}
 

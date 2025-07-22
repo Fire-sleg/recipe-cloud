@@ -46,14 +46,14 @@
 
         <!-- Filter Groups -->
         <div class="filter-groups">
-          <!-- Allergens -->
+          <!-- Allergens [checked]="filters.allergens?.includes(allergen)"-->
           <div class="filter-group">
             <h5 class="filter-group-title">Алергени</h5>
             <div class="filter-options">
               <div class="custom-checkbox" *ngFor="let allergen of checkboxFilter?.allergens">
                 <input class="checkbox-input" type="checkbox" 
                        [id]="'allergen-' + allergen" 
-                      [checked]="filters.allergens?.includes(allergen)"
+                       
                        (change)="onFilterChange('allergens', allergen, $event)">
                 <label class="checkbox-label" [for]="'allergen-' + allergen">
                   {{ allergen }}
@@ -61,15 +61,15 @@
               </div>
             </div>
           </div>
-
-          <!-- Cuisines -->
+                       
+          <!-- Cuisines [checked]="filters.cuisines?.includes(cuisine)"-->
           <div class="filter-group">
             <h5 class="filter-group-title">Кухні світу</h5>
             <div class="filter-options">
               <div class="custom-checkbox" *ngFor="let cuisine of checkboxFilter?.cuisines">
                 <input class="checkbox-input" type="checkbox" 
                        [id]="'cuisine-' + cuisine" 
-                        [checked]="filters.cuisines?.includes(cuisine)"
+
                        (change)="onFilterChange('cuisines', cuisine, $event)">
                 <label class="checkbox-label" [for]="'cuisine-' + cuisine">
                   {{ cuisine }}
@@ -78,14 +78,14 @@
             </div>
           </div>
 
-          <!-- Diets -->
+          <!-- Diets [checked]="filters.diets?.includes(diet)"-->
           <div class="filter-group">
             <h5 class="filter-group-title">Дієти</h5>
             <div class="filter-options">
               <div class="custom-checkbox" *ngFor="let diet of checkboxFilter?.diets">
                 <input class="checkbox-input" type="checkbox" 
                        [id]="'diet-' + diet" 
-                       [checked]="filters.diets?.includes(diet)"
+                       
                        (change)="onFilterChange('diets', diet, $event)">
                 <label class="checkbox-label" [for]="'diet-' + diet">
                   {{ diet }}

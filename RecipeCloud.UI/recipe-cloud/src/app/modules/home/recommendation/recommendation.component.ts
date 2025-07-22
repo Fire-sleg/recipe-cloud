@@ -35,7 +35,7 @@ export class RecommendationComponent implements OnInit {
       }
     }, 8000);
 
-    this.recomService.getRecommendations(20).subscribe((recommendationRecipes: Recipe[])=>{
+    this.recomService.getRecommendations(150).subscribe((recommendationRecipes: Recipe[])=>{
       this.recommendations = recommendationRecipes;
        this.calculateDimensions();
        this.updateIndicators();

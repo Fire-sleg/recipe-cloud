@@ -70,6 +70,11 @@ namespace RecommendationService.Services
 
                 // 4. Фільтрувати та оцінити схожість
                 var filteredRecipes = FilterByPreferences(similarRecipes, preferences);
+                if (filteredRecipes.Count < similarRecipes.Count/2)
+                {
+                    filteredRecipes = similarRecipes;
+                }
+
                 //foreach (var similarRecipe in filteredRecipes)
                 //{
                 //    if (similarRecipe.Id == recipe.Id) continue;
