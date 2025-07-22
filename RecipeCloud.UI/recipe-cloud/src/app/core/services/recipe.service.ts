@@ -23,7 +23,7 @@ export class RecipeService {
     return this.http.get<Recipe>(`${environment.apiUrl}/recipes/` + transliteratedName);
   }
 
-  getRecipe(id: string): Observable<Recipe> {
+  getRecipeById(id: string): Observable<Recipe> {
     return this.http.get<Recipe>(`${environment.apiUrl}/recipes/${id}`);
   }
 

@@ -11,9 +11,10 @@ import { MatListModule } from '@angular/material/list';
 import { RouterModule, Routes } from '@angular/router';
 import { RecipeListComponent } from './recipe-list/recipe-list.component';
 import { SharedModule } from '../shared/shared.module';
+import { RecipeFormComponent } from "./recipe-form/recipe-form.component";
 
 @NgModule({
-  declarations: [RecipeItemComponent],
+  declarations: [RecipeItemComponent, RecipeFormComponent],
   imports: [
     FormsModule,
     CommonModule,
@@ -26,6 +27,6 @@ import { SharedModule } from '../shared/shared.module';
     MatListModule,
     SharedModule,
 ],
-  exports: [RecipeItemComponent]
+  exports: [RecipeItemComponent, RecipeFormComponent]
 })
 export class RecipeSharedModule {}

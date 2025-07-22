@@ -54,11 +54,34 @@
         </div>
 
         <div class="form-row">
-          <div class="form-group">
+          <!-- <div class="form-group">
             <label>Категорія</label>
             <div class="category-display" *ngIf="category">{{ category.name }}</div>
             <div class="category-display" *ngIf="!category">Не вибрано</div>
+          </div> -->
+          <!-- If category is passed, show as read-only -->
+          <div *ngIf="category; else categorySelect">
+            <label>Категорія</label>
+            <div class="category-display">{{ category.name }}</div>
           </div>
+
+          <!-- If category is not passed, show a select dropdown -->
+          <ng-template #categorySelect>
+            <div class="form-group">
+              <label for="categoryId">Категорія *</label>
+              <select 
+                id="categoryId" 
+                formControlName="categoryId" 
+                class="form-control"
+                [class.is-invalid]="isFieldInvalid('categoryId')">
+                <option value="">-- Оберіть категорію --</option>
+                <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+              </select>
+              <div class="invalid-feedback" *ngIf="isFieldInvalid('categoryId')">
+                {{ getFieldError('categoryId') }}
+              </div>
+            </div>
+          </ng-template>
 
           <div class="form-group">
             <label for="difficulty">Складність</label>

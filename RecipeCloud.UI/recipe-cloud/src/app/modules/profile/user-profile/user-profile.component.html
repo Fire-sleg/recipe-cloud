@@ -149,7 +149,7 @@
         </div>
 
         <!-- Created Recipes Tab app-recipes-->
-        <div *ngIf="activeTab === 'recipes'" class="tab-content">
+        <!-- <div *ngIf="activeTab === 'recipes'" class="tab-content">
           <div class="recipes-section">
             <div class="section-header">
               <h2 class="section-title">
@@ -194,8 +194,10 @@
               </div>
             </ng-template>
           </div>
+        </div> -->
+        <div *ngIf="activeTab === 'recipes'" class="tab-content">
+          <app-user-recipes></app-user-recipes>
         </div>
-
         <!-- Recipe Collections Tab app-collections-->
         <div *ngIf="activeTab === 'collections'" class="tab-content">
           <div class="collections-section">

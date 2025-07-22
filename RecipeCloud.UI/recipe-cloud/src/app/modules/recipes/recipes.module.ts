@@ -30,8 +30,7 @@ const routes: Routes = [
     RecipeFilterComponent,
     RecipeListComponent,
     RecipeListComponent,
-    RecipeDetailComponent,
-    RecipeFormComponent
+    RecipeDetailComponent
   ],
   imports: [
     FormsModule,

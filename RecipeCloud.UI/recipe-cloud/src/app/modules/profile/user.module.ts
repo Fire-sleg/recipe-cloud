@@ -10,6 +10,9 @@ import { MatListModule } from '@angular/material/list';
 import { RouterModule, Routes } from '@angular/router';
 import { UserProfileComponent } from './user-profile/user-profile.component';
 import { SharedModule } from '../shared/shared.module';
+import { RecipeFormComponent } from '../recipes/recipe-form/recipe-form.component';
+import { RecipeSharedModule } from '../recipes/recipe-shared.module';
+import { UserRecipesComponent } from './user-recipes/user-recipes.component';
 
 const routes: Routes = [
   { path: '', component: UserProfileComponent }
@@ -19,9 +22,11 @@ const routes: Routes = [
 
 @NgModule({
   declarations: [
-    UserProfileComponent
+    UserProfileComponent,
+    UserRecipesComponent
   ],
   imports: [
+    RecipeSharedModule,
     FormsModule,
     CommonModule,
     ReactiveFormsModule,

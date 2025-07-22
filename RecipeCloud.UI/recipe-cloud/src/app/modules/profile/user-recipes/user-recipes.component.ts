@@ -3,6 +3,7 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { Recipe } from '../../../core/models/recipe.model';
 import { Router } from '@angular/router';
 
+
 @Component({
   selector: 'app-user-recipes',
   templateUrl: './user-recipes.component.html',

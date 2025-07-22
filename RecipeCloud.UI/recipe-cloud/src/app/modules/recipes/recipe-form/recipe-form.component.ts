@@ -5,6 +5,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { Recipe } from '../../../core/models/recipe.model';
 import { Category } from '../../../core/models/category.model';
 import { ActivatedRoute, Router } from '@angular/router';
+import { CategoryService } from '../../../core/services/category.service';
 
 @Component({
   selector: 'app-recipe-form',
@@ -16,6 +17,7 @@ export class RecipeFormComponent implements OnInit {
   @Output() recipeCreated = new EventEmitter<Recipe>();
   @Output() formClosed = new EventEmitter<void>();
 
+  categories: Category[] | null = null;
   recipeForm: FormGroup;
   isSubmitting = false;
   showForm = false;
@@ -30,12 +32,18 @@ export class RecipeFormComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private recipeService: RecipeService,
+    private categoryService: CategoryService,
     private authService: AuthService,
     private route: ActivatedRoute,
     private router: Router
   ) {
     const navigation = this.router.getCurrentNavigation();
     this.category = navigation?.extras?.state?.['category'];
+    if(!this.category){
+      this.categoryService.getSubCategoriesWithRecipes().subscribe((response: Category[])=>{
+        this.categories = response;
+      });
+    }
     this.recipeForm = this.createForm();
   }
 

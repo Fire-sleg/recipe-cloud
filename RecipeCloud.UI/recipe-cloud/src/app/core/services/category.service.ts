@@ -19,5 +19,9 @@ export class CategoryService {
   getCategoryByTransliteratedName(transliteratedName: string){
     return this.http.get<Category>(`${environment.apiUrl}/categories/` + transliteratedName);
   }
+  //categories/sub-with-recipes
+  getSubCategoriesWithRecipes(){
+    return this.http.get<Category[]>(`${environment.apiUrl}/categories/sub-with-recipes`);
+  }
 
 }

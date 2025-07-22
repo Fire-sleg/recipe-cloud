@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using RecipeService.Models.Categories.DTOs;
 using RecipeService.Models.Categories;
 using RecipeService.Repository;
+using Microsoft.EntityFrameworkCore;
 
 namespace RecipeService.Controllers
 {
@@ -46,7 +47,7 @@ namespace RecipeService.Controllers
         public async Task<IActionResult> GetSubCategoriesAsync()
         {
             var list = await _dbCategory.GetAllAsync(
-                c => c.ParentCategoryId != null || c.ParentCategoryId != Guid.Empty,
+                c => c.ParentCategoryId != null && c.ParentCategoryId != Guid.Empty,
                 withSubCategories: true,
                 withRecipes: false
             );
@@ -56,6 +57,30 @@ namespace RecipeService.Controllers
             return Ok(categories);
         }
 
+        [HttpGet("sub-with-recipes")]
+        public async Task<IActionResult> GetSubCategoriesWithRecipesAsync()
+        {
+            var list = await _dbCategory.GetAllAsync(
+                c => c.ParentCategoryId == null || c.ParentCategoryId == Guid.Empty,
+                withSubCategories: true,
+                withRecipes: false
+            );
+
+            // Створюємо список для всіх підкатегорій
+            var subCategories = new List<Category>();
+
+            // Проходимо по кожній базовій категорії та додаємо її підкатегорії до загального списку
+            foreach (var baseCategory in list.OrderBy(c => c.Order))
+            {
+                if (baseCategory.SubCategories != null && baseCategory.SubCategories.Any())
+                {
+                    subCategories.AddRange(baseCategory.SubCategories);
+                }
+            }
+
+            var categories = _mapper.Map<List<CategoryDTO>>(subCategories);
+            return Ok(categories);
+        }
 
         [HttpGet("{id:guid}")]
         public async Task<IActionResult> GetAsync(Guid id)
