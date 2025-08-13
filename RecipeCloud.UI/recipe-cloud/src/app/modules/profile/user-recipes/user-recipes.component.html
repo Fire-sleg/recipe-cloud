@@ -1,49 +1,124 @@
-<div class="recipes-section">
-  <div class="section-header">
-    <h2 class="section-title">
-      <span class="section-icon">👨‍🍳</span>
-      Мої створені рецепти
-    </h2>
-    <p class="section-description">Рецепти, які ви створили та додали до системи</p>
-  </div>
-  
-  <div class="recipes-grid" *ngIf="recipes.length > 0; else noRecipes">
-    <div *ngFor="let recipe of recipes" class="recipe-card">
-      <div class="recipe-image">
-        <img [src]="recipe.imageUrl || '/assets/default-recipe.jpg'" [alt]="recipe.title">
+<div class="recipes-container">
+  <div class="base-container">
+    <div class="recipes-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-icon">👨‍🍳</span>
+          Мої створені рецепти
+        </h2>
+        <p class="section-description">Рецепти, які ви створили та додали до системи</p>
       </div>
-      <div class="recipe-info">
-        <h3 class="recipe-name">{{ recipe.title }}</h3>
-        <p class="recipe-description">{{ recipe.description }}</p>
-        <div class="recipe-meta">
-          <span class="recipe-time">⏱️ {{ recipe.cookingTime }} хв</span>
-          <span class="recipe-difficulty">📊 {{ recipe.difficulty }}</span>
-        </div>
-        <div class="recipe-actions">
-          <button class="action-btn view" (click)="viewRecipe(recipe.id)">
-            <span>👁️</span> Переглянути
-          </button>
-          <button class="action-btn edit" (click)="editRecipe(recipe.id)">
-            <span>✏️</span> Редагувати
-          </button>
-          <button class="action-btn delete" (click)="deleteRecipe(recipe.id)">
-            <span>🗑️</span> Видалити
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <ng-template #noRecipes>
-    <div class="empty-state">
-      <div class="empty-icon">👨‍🍳</div>
-      <h3>Ви ще не створили жодного рецепту</h3>
-      <p>Почніть створювати власні кулінарні шедеври!</p>
-      <!-- <button class="create-recipe-btn" (click)="createNewRecipe()">
-        <span>➕</span> Створити рецепт
-      </button> -->
-      <app-recipe-form></app-recipe-form>
 
+      <!-- Demo with recipes -->
+      <div class="recipes-grid">
+
+        <!-- Recipe 1 -->
+        <div class="recipe-card">
+          <div class="recipe-image">
+            <div class="recipe-image-placeholder">🍝</div>
+          </div>
+          <div class="recipe-info">
+            <h3 class="recipe-name">Паста Карбонара</h3>
+            <p class="recipe-description">
+              Класична італійська паста з беконом, яйцями та сиром пармезан. Проста у приготуванні та неймовірно смачна.
+            </p>
+            <div class="recipe-meta">
+              <span class="recipe-time">⏱️ 25 хв</span>
+              <span class="recipe-difficulty">📊 Середня</span>
+            </div>
+            <div class="recipe-actions">
+              <button class="action-btn view">
+                <span>👁️</span> Переглянути
+              </button>
+              <button class="action-btn edit">
+                <span>✏️</span> Редагувати
+              </button>
+              <button class="action-btn delete">
+                <span>🗑️</span> Видалити
+              </button>
+            </div>
+            <div class="recipe-stats">
+              <span class="recipe-date">📅 15 серп 2024</span>
+              <span class="recipe-likes">❤️ 12</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipe 2 -->
+        <div class="recipe-card">
+          <div class="recipe-image">
+            <div class="recipe-image-placeholder">🥗</div>
+          </div>
+          <div class="recipe-info">
+            <h3 class="recipe-name">Цезар з куркою</h3>
+            <p class="recipe-description">
+              Свіжий салат з листям салату, курячою грудкою, сухариками та класичним соусом Цезар.
+            </p>
+            <div class="recipe-meta">
+              <span class="recipe-time">⏱️ 15 хв</span>
+              <span class="recipe-difficulty">📊 Легка</span>
+            </div>
+            <div class="recipe-actions">
+              <button class="action-btn view">
+                <span>👁️</span> Переглянути
+              </button>
+              <button class="action-btn edit">
+                <span>✏️</span> Редагувати
+              </button>
+              <button class="action-btn delete">
+                <span>🗑️</span> Видалити
+              </button>
+            </div>
+            <div class="recipe-stats">
+              <span class="recipe-date">📅 12 серп 2024</span>
+              <span class="recipe-likes">❤️ 8</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipe 3 -->
+        <div class="recipe-card">
+          <div class="recipe-image">
+            <div class="recipe-image-placeholder">🍰</div>
+          </div>
+          <div class="recipe-info">
+            <h3 class="recipe-name">Шоколадний торт</h3>
+            <p class="recipe-description">
+              Насичений шоколадний торт з ніжним кремом. Ідеальний десерт для особливих випадків.
+            </p>
+            <div class="recipe-meta">
+              <span class="recipe-time">⏱️ 90 хв</span>
+              <span class="recipe-difficulty">📊 Складна</span>
+            </div>
+            <div class="recipe-actions">
+              <button class="action-btn view">
+                <span>👁️</span> Переглянути
+              </button>
+              <button class="action-btn edit">
+                <span>✏️</span> Редагувати
+              </button>
+              <button class="action-btn delete">
+                <span>🗑️</span> Видалити
+              </button>
+            </div>
+            <div class="recipe-stats">
+              <span class="recipe-date">📅 10 серп 2024</span>
+              <span class="recipe-likes">❤️ 25</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- No recipes template -->
+      <ng-template #noRecipes>
+        <div class="empty-state">
+          <div class="empty-icon">👨‍🍳</div>
+          <h3>Ви ще не створили жодного рецепту</h3>
+          <p>Почніть створювати власні кулінарні шедеври!</p>
+          <app-recipe-form></app-recipe-form>
+        </div>
+      </ng-template>
     </div>
-  </ng-template>
+  </div>
 </div>

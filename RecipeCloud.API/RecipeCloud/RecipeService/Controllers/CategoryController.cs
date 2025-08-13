@@ -2,11 +2,13 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using RecipeService.Models.Categories.DTOs;
 using RecipeService.Models.Categories;
 using RecipeService.Repository;
 using Microsoft.EntityFrameworkCore;
+using StackExchange.Redis;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace RecipeService.Controllers
 {
@@ -16,10 +18,12 @@ namespace RecipeService.Controllers
     {
         private readonly ICategoryRepository _dbCategory;
         private readonly IMapper _mapper;
-        public CategoryController(ICategoryRepository dbCategory, IMapper mapper)
+        private readonly IDatabase _redis;
+        public CategoryController(ICategoryRepository dbCategory, IMapper mapper, IConnectionMultiplexer redis)
         {
             _dbCategory = dbCategory;
             _mapper = mapper;
+            _redis = redis.GetDatabase();
         }
 
         [HttpGet]
@@ -33,6 +37,13 @@ namespace RecipeService.Controllers
         [HttpGet("base")]
         public async Task<IActionResult> GetBaseCategoriesAsync()
         {
+            var cacheKey = $"recipe:category:base";
+            var cached = await _redis.StringGetAsync(cacheKey);
+            if (cached.HasValue)
+            {
+                var categoriesFromRedis = JsonSerializer.Deserialize<List<CategoryDTO>>(cached);
+                return Ok(categoriesFromRedis);
+            }
             var list = await _dbCategory.GetAllAsync(
                 c => c.ParentCategoryId == null || c.ParentCategoryId == Guid.Empty,
                 withSubCategories: true, 
@@ -41,6 +52,11 @@ namespace RecipeService.Controllers
             list = list.OrderBy(c => c.Order).ToList();
 
             var categories = _mapper.Map<List<CategoryDTO>>(list);
+            var jsonOptions = new JsonSerializerOptions
+            {
+                ReferenceHandler = ReferenceHandler.IgnoreCycles
+            };
+            await _redis.StringSetAsync(cacheKey, JsonSerializer.Serialize(categories, jsonOptions), TimeSpan.FromHours(24));
             return Ok(categories);
         }
         [HttpGet("sub")]
@@ -66,10 +82,8 @@ namespace RecipeService.Controllers
                 withRecipes: false
             );
 
-            // Створюємо список для всіх підкатегорій
             var subCategories = new List<Category>();
 
-            // Проходимо по кожній базовій категорії та додаємо її підкатегорії до загального списку
             foreach (var baseCategory in list.OrderBy(c => c.Order))
             {
                 if (baseCategory.SubCategories != null && baseCategory.SubCategories.Any())
@@ -136,7 +150,6 @@ namespace RecipeService.Controllers
                         withRecipes: false,
                         tracked: false) != null)
                 {
-                    // можеш пропустити, або зібрати в список помилок
                     continue;
                 }
 

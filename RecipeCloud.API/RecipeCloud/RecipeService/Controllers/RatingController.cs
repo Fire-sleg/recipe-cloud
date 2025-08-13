@@ -32,7 +32,6 @@ namespace RecipeService.Controllers
                     return BadRequest("Rating must be between 1 and 5");
                 }
 
-                // Отримуємо UserId з токена
                 var userId = GetCurrentUserId();
 
                 var result = await _dbRating.RateRecipeAsync(userId, ratingDto.RecipeId, ratingDto.Rating);
@@ -55,7 +54,6 @@ namespace RecipeService.Controllers
         {
             try
             {
-                // Отримуємо UserId з токена
                 var userId = GetCurrentUserId();
 
                 var rating = await _dbRating.GetRecipeRating(recipeId, userId);
@@ -78,7 +76,6 @@ namespace RecipeService.Controllers
         {
             try
             {
-                // Отримуємо UserId з токена
                 var userId = GetCurrentUserId();
 
                 var ratings = await _dbRating.GetUserRatingAsync(userId);
@@ -98,7 +95,6 @@ namespace RecipeService.Controllers
 
         private Guid GetCurrentUserId()
         {
-            // Припускаю, що UserId зберігається в claims
             var userId = Guid.Parse(User.FindFirst("ident")?.Value);
             return userId;
         }

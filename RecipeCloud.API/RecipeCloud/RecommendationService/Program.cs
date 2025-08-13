@@ -8,10 +8,10 @@ using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddStackExchangeRedisCache(options =>
-{
-    options.Configuration = builder.Configuration["Redis:ConnectionString"];
-});
+//builder.Services.AddStackExchangeRedisCache(options =>
+//{
+//    options.Configuration = builder.Configuration["Redis:ConnectionString"];
+//});
 builder.Services.AddHttpClient();
 
 
@@ -50,7 +50,6 @@ builder.Services.AddSwaggerGen(options =>
         Version = "v1"
     });
 
-    // Додаємо кнопку авторизації для Swagger UI
     options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
         Name = "Authorization",

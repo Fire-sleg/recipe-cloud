@@ -264,7 +264,6 @@ namespace RecipeService.Controllers
         {
             try
             {
-                // Перевірка відповідності Id
                 if (id != updateDTO.Id)
                 {
                     _response.StatusCode = HttpStatusCode.BadRequest;
@@ -273,7 +272,6 @@ namespace RecipeService.Controllers
                     return BadRequest(_response);
                 }
 
-                // Валідація DTO та зображення
                 var updateValidationResult = await _updateValidator.ValidateAsync((updateDTO, image));
                 if (!updateValidationResult.IsValid)
                 {

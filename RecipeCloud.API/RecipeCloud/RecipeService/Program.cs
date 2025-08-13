@@ -10,9 +10,11 @@ using RecipeService.Data;
 using RecipeService.Repository;
 using RecipeService.Services;
 using RecipeService.Validators;
+using StackExchange.Redis;
 using System;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json.Serialization;
 
 //var builder = WebApplication.CreateBuilder(args);
 
@@ -29,6 +31,10 @@ using System.Text;
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+//builder.Services.AddStackExchangeRedisCache(options =>
+//{
+//    options.Configuration = builder.Configuration["Redis:ConnectionString"];
+//});
 
 builder.Services.AddCors(options =>
 {
@@ -44,6 +50,11 @@ builder.Services.AddCors(options =>
 // Add services to the container.
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseNpgsql(connectionString));
 
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    return ConnectionMultiplexer.Connect(builder.Configuration["Redis:ConnectionString"]);
+});
+
 /*include repo*/
 builder.Services.AddScoped<IRecipeRepository, RecipeRepository>();
 builder.Services.AddScoped<IBreadcrumbRepository, BreadcrumbRepository>();
@@ -55,7 +66,12 @@ builder.Services.AddScoped<IMinIOService, MinIOService>();
 
 builder.Services.AddAutoMapper(typeof(MappingConfig)); // Ðåºñòðàö³ÿ AutoMapper
 builder.Services.AddAWSService<IAmazonS3>();
-builder.Services.AddControllers().AddNewtonsoftJson(); 
+builder.Services.AddControllers()
+    .AddJsonOptions(opt =>
+    {
+        opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
+
 builder.Services.AddFluentValidationAutoValidation().AddFluentValidationClientsideAdapters();
 builder.Services.AddValidatorsFromAssemblyContaining<RecipeCreateDTOValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<RecipeUpdateDTOValidator>();

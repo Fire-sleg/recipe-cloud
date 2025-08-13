@@ -131,7 +131,6 @@ namespace RecipeService.Controllers
                 var collection = _mapper.Map<Collection>(createDTO);
                 collection.CreatedBy = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
 
-                // Завантаження рецептів
                 if (createDTO.RecipeIds.Any())
                 {
                     var recipes = await _dbRecipe.GetAllAsync(r => createDTO.RecipeIds.Contains(r.Id));
@@ -142,7 +141,6 @@ namespace RecipeService.Controllers
                     collection.Recipes = new List<Recipe>();
                 }
 
-                // Обчислення поживних показників
                 UpdateNutritionalValues(collection);
 
                 await _dbCollection.CreateAsync(collection);
@@ -187,7 +185,6 @@ namespace RecipeService.Controllers
                     return BadRequest(_response);
                 }
 
-                // Перевірка існування рецептів
                 if (updateDTO.RecipeIds.Any())
                 {
                     var recipes = await _dbRecipe.GetAllAsync(r => updateDTO.RecipeIds.Contains(r.Id));
@@ -221,7 +218,6 @@ namespace RecipeService.Controllers
                 collection.CreatedBy = existingCollection.CreatedBy;
                 collection.CreatedAt = existingCollection.CreatedAt;
 
-                // Завантаження рецептів
                 if (updateDTO.RecipeIds.Any())
                 {
                     var recipes = await _dbRecipe.GetAllAsync(r => updateDTO.RecipeIds.Contains(r.Id));
@@ -232,7 +228,6 @@ namespace RecipeService.Controllers
                     collection.Recipes = new List<Recipe>();
                 }
 
-                // Обчислення поживних показників
                 UpdateNutritionalValues(collection);
 
                 await _dbCollection.UpdateAsync(collection);

@@ -30,12 +30,22 @@ services:
       - recipecloud-network
     restart: unless-stopped
 
-  redis:
+  redis-recom:
     image: redis:7
     ports:
       - "6379:6379"
     volumes:
-      - redis-data:/data
+      - redis-recom-data:/data
+    networks:
+      - recipecloud-network
+    restart: unless-stopped
+
+  redis-recipe:
+    image: redis:7
+    ports:
+      - "6380:6379"
+    volumes:
+      - redis-recipe-data:/data
     networks:
       - recipecloud-network
     restart: unless-stopped
@@ -83,9 +93,11 @@ services:
       - MinIO__AccessKey=admin
       - MinIO__SecretKey=password
       - MinIO__BucketName=recipe-images
+      - Redis__ConnectionString=redis-recipe:6379
     depends_on:
       - postgres-recipe
       - minio
+      - redis-recipe
     networks:
       - recipecloud-network
     restart: unless-stopped
@@ -100,11 +112,11 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - ServiceUrls__UserService=http://auth-service:8080
       - ServiceUrls__RecipeService=http://recipe-service:8080
-      - Redis__ConnectionString=redis:6379
+      - Redis__ConnectionString=redis-recom:6379
     depends_on:
       - recipe-service
       - auth-service 
-      - redis
+      - redis-recom
     networks:
       - recipecloud-network
     restart: unless-stopped
@@ -114,7 +126,8 @@ services:
 volumes:
   postgres-auth-data:
   postgres-recipe-data:
-  redis-data:
+  redis-recom-data:
+  redis-recipe-data:
   minio-data:
 
 networks:
