@@ -22,6 +22,9 @@ export class RecipeService {
   getByTransliteratedName(transliteratedName: string){
     return this.http.get<Recipe>(`${environment.apiUrl}/recipes/` + transliteratedName);
   }
+  getByUserId(userId: string){
+    return this.http.get<Recipe[]>(`${environment.apiUrl}/recipes/user/` + userId);
+  }
 
   getRecipeById(id: string): Observable<Recipe> {
     return this.http.get<Recipe>(`${environment.apiUrl}/recipes/${id}`);
@@ -38,6 +41,7 @@ export class RecipeService {
   deleteRecipe(id: string): Observable<void> {
     return this.http.delete<void>(`${environment.apiUrl}/recipes/${id}`);
   }
+
   incrementViewCount(recipeId: string): Observable<any> {
     return this.http.patch(`${environment.apiUrl}/recipes/${recipeId}/increment-views`, {});
   }

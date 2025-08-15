@@ -1,6 +1,8 @@
 <div class="recipes-container">
   <div class="base-container">
+    
     <div class="recipes-section">
+
       <div class="section-header">
         <h2 class="section-title">
           <span class="section-icon">👨‍🍳</span>
@@ -9,22 +11,20 @@
         <p class="section-description">Рецепти, які ви створили та додали до системи</p>
       </div>
 
-      <!-- Demo with recipes -->
-      <div class="recipes-grid">
+      <div class="recipes-grid" *ngFor="let recipe of recipes">
 
-        <!-- Recipe 1 -->
         <div class="recipe-card">
           <div class="recipe-image">
             <div class="recipe-image-placeholder">🍝</div>
           </div>
           <div class="recipe-info">
-            <h3 class="recipe-name">Паста Карбонара</h3>
+            <h3 class="recipe-name">{{ recipe.title }}</h3>
             <p class="recipe-description">
-              Класична італійська паста з беконом, яйцями та сиром пармезан. Проста у приготуванні та неймовірно смачна.
+              {{recipe.description}}
             </p>
             <div class="recipe-meta">
-              <span class="recipe-time">⏱️ 25 хв</span>
-              <span class="recipe-difficulty">📊 Середня</span>
+              <span class="recipe-time">⏱️ {{recipe.cookingTime}} хв</span>
+              <span class="recipe-difficulty">📊 {{recipe.difficulty}}</span>
             </div>
             <div class="recipe-actions">
               <button class="action-btn view">
@@ -38,77 +38,24 @@
               </button>
             </div>
             <div class="recipe-stats">
-              <span class="recipe-date">📅 15 серп 2024</span>
-              <span class="recipe-likes">❤️ 12</span>
+              <span class="recipe-date">📅 {{recipe.createdAt}}</span>
+              <span class="recipe-likes">❤️ {{recipe.averageRating}}</span>
             </div>
           </div>
         </div>
+        
 
-        <!-- Recipe 2 -->
-        <div class="recipe-card">
-          <div class="recipe-image">
-            <div class="recipe-image-placeholder">🥗</div>
-          </div>
-          <div class="recipe-info">
-            <h3 class="recipe-name">Цезар з куркою</h3>
-            <p class="recipe-description">
-              Свіжий салат з листям салату, курячою грудкою, сухариками та класичним соусом Цезар.
-            </p>
-            <div class="recipe-meta">
-              <span class="recipe-time">⏱️ 15 хв</span>
-              <span class="recipe-difficulty">📊 Легка</span>
-            </div>
-            <div class="recipe-actions">
-              <button class="action-btn view">
-                <span>👁️</span> Переглянути
-              </button>
-              <button class="action-btn edit">
-                <span>✏️</span> Редагувати
-              </button>
-              <button class="action-btn delete">
-                <span>🗑️</span> Видалити
-              </button>
-            </div>
-            <div class="recipe-stats">
-              <span class="recipe-date">📅 12 серп 2024</span>
-              <span class="recipe-likes">❤️ 8</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Recipe 3 -->
-        <div class="recipe-card">
-          <div class="recipe-image">
-            <div class="recipe-image-placeholder">🍰</div>
-          </div>
-          <div class="recipe-info">
-            <h3 class="recipe-name">Шоколадний торт</h3>
-            <p class="recipe-description">
-              Насичений шоколадний торт з ніжним кремом. Ідеальний десерт для особливих випадків.
-            </p>
-            <div class="recipe-meta">
-              <span class="recipe-time">⏱️ 90 хв</span>
-              <span class="recipe-difficulty">📊 Складна</span>
-            </div>
-            <div class="recipe-actions">
-              <button class="action-btn view">
-                <span>👁️</span> Переглянути
-              </button>
-              <button class="action-btn edit">
-                <span>✏️</span> Редагувати
-              </button>
-              <button class="action-btn delete">
-                <span>🗑️</span> Видалити
-              </button>
-            </div>
-            <div class="recipe-stats">
-              <span class="recipe-date">📅 10 серп 2024</span>
-              <span class="recipe-likes">❤️ 25</span>
-            </div>
-          </div>
-        </div>
+        
 
       </div>
+      <!-- <div class="btn-conteiner">
+        <button tton class="create-recipe-btn" (click)="createNewRecipe()">
+          <span>➕</span> Створити рецепт
+        </button>
+      </div> -->
+
+      
+     
 
       <!-- No recipes template -->
       <ng-template #noRecipes>
@@ -119,6 +66,9 @@
           <app-recipe-form></app-recipe-form>
         </div>
       </ng-template>
-    </div>
+    
+  </div>
+  <div class="form-actions">
+    <app-recipe-form ></app-recipe-form>
   </div>
 </div>

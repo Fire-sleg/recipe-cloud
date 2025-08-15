@@ -226,6 +226,11 @@
     max-width: 400px;
     margin: 0 auto 32px auto;
 }
+.btn-conteiner{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
 
 .create-recipe-btn {
     background: linear-gradient(135deg, #dec4aa, #c9b296);
@@ -338,4 +343,18 @@
 @keyframes skeleton-loading {
     0% { left: -100%; }
     100% { left: 100%; }
+}
+.create-recipe-section {
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #f0ebe5;
+  text-align: center;
+}
+
+.form-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 20px 0;
 }

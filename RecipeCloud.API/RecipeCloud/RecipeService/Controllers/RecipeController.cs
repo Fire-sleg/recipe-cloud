@@ -16,6 +16,7 @@ using RecipeService.Repository;
 using RecipeService.Services;
 using System.Net;
 using System.Security.Claims;
+using System.Text.Json;
 
 namespace RecipeService.Controllers
 {
@@ -124,18 +125,39 @@ namespace RecipeService.Controllers
             return Ok(recipe);
         }
 
+        [HttpGet("user/{id:guid}")]
+        public async Task<IActionResult> GetByUserIdAsync(Guid userId)
+        {
+            var list = await _dbRecipe.GetAllAsync(u => u.CreatedBy == userId);
+            var recipes = _mapper.Map<List<RecipeDTO>>(list);
+            return Ok(recipes);
+        }
+        [HttpPost("test")]
+        public async Task<ActionResult<APIResponse>> TestAsync()
+        {
+            var emptyStream = new MemoryStream();
+            IFormFile emptyFile = new FormFile(emptyStream, 0, 0, "file", "empty.jpg")
+            {
+                Headers = new HeaderDictionary(),
+                ContentType = "image/jpeg"
+            };
+            var imageUrl = await _minIOService.UploadImageAsync(emptyFile);
+            return Ok(imageUrl);
+        }
+
         [HttpPost]
         //[Authorize]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult<APIResponse>> CreateRecipeAsync([FromBody] RecipeCreateDTO createDTO) //, IFormFile image
+        public async Task<ActionResult<APIResponse>> CreateRecipeAsync([FromForm] RecipeCreateDTO createDTO) //[FromForm] string recipe/*[FromBody] RecipeCreateDTO createDTO*/, IFormFile image
         {
             try
             {
+
                 /*Need*/
                 // Валідація DTO та зображення
-                //var createValidationResult = await _createValidator.ValidateAsync((createDTO, image));
+                //var createValidationResult = await _createValidator.ValidateAsync((recipeDto, image));
                 //if (!createValidationResult.IsValid)
                 //{
                 //    _response.StatusCode = HttpStatusCode.BadRequest;
@@ -144,32 +166,28 @@ namespace RecipeService.Controllers
                 //    return BadRequest(_response);
                 //}
 
-                //var imageUrl = await _minIOService.UploadImageAsync(image);
+                var imageUrl = await _minIOService.UploadImageAsync(createDTO.Image);
                 /*Need*/
-                var recipe = _mapper.Map<Recipe>(createDTO);
-
-
-                /*Need*/
-                //recipe.ImageUrl = imageUrl;
-                /*Need*/
-
-
-                // recipe.CreatedBy = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var recipeMap = _mapper.Map<Recipe>(createDTO);
 
 
                 /*Need*/
-                //recipe.CreatedBy = Guid.Parse(User.FindFirst("ident")?.Value);
-                //recipe.CreatedByUsername = User.FindFirst(ClaimTypes.Email)?.Value;
-                //var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
-                //recipe.IsUserCreated = userRole != "Admin" && userRole != "Moderator";
+                recipeMap.ImageUrl = imageUrl;
                 /*Need*/
-                await _dbRecipe.CreateAsync(recipe);
 
-                _response.Result = _mapper.Map<RecipeDTO>(recipe);
+                /*Need*/
+                recipeMap.CreatedBy = Guid.Parse(User.FindFirst("ident")?.Value);
+                recipeMap.CreatedByUsername = User.FindFirst(ClaimTypes.Email)?.Value;
+                var userRole = User.FindFirst(ClaimTypes.Role)?.Value;
+                recipeMap.IsUserCreated = userRole != "Admin" && userRole != "Moderator";
+                /*Need*/
+                await _dbRecipe.CreateAsync(recipeMap);
+
+                _response.Result = _mapper.Map<RecipeDTO>(recipeMap);
                 _response.StatusCode = HttpStatusCode.Created;
                 _response.IsSuccess = true;
 
-                return CreatedAtRoute("GetRecipe", new { id = recipe.Id }, _response);
+                return CreatedAtRoute("GetRecipe", new { id = recipeMap.Id }, _response);
             }
             catch (Exception ex)
             {

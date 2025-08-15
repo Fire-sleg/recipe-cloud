@@ -19,7 +19,7 @@ export class RecipeFormComponent implements OnInit {
 
   categories: Category[] | null = null;
   recipeForm: FormGroup;
-  isSubmitting = false;
+  // isSubmitting = false;
   showForm = false;
   
   // File upload properties
@@ -59,6 +59,8 @@ export class RecipeFormComponent implements OnInit {
       cookingTime: [0, [Validators.required, Validators.min(1)]],
       servings: [1, [Validators.required, Validators.min(1)]],
       difficulty: ['Easy', Validators.required],
+      cuisine: ['', [Validators.required, Validators.minLength(3)]],
+
       
       // Nutritional Information
       calories: [0, [Validators.min(0)]],
@@ -68,7 +70,7 @@ export class RecipeFormComponent implements OnInit {
       
       // Characteristics as FormArrays
       allergens: this.fb.array([this.createCharacteristicGroup()]),
-      cuisines: this.fb.array([this.createCharacteristicGroup()]),
+      // cuisines: this.fb.array([this.createCharacteristicGroup()]),
       diets: this.fb.array([this.createCharacteristicGroup()]),
       tags: this.fb.array([this.createCharacteristicGroup()]),
       
@@ -306,61 +308,128 @@ export class RecipeFormComponent implements OnInit {
 
   // Form submission
   onSubmit(): void {
-    if (this.recipeForm.valid && !this.isSubmitting) {
-      this.isSubmitting = true;
+
+    const formData = this.prepareFormData();
       
-      const formData = this.prepareFormData();
+      console.log('=== FormData content ===');
+      formData.forEach((value, key) => {
+        console.log(`${key}:`, value);
+      });
+
+
+      this.recipeService.createRecipe(formData).subscribe({
+        next: (recipe) => {
+          this.recipeCreated.emit(recipe);
+          this.hideCreateForm();
+          alert('Рецепт успішно створено!');
+        },
+        error: (error) => {
+          console.error('Error creating recipe:', error);
+          alert('Помилка при створенні рецепту. Спробуйте ще раз.');
+        },
+        complete: () => {
+          // this.isSubmitting = false;
+        }
+      });
+    // if (this.recipeForm.valid && !this.isSubmitting) {
+    //   this.isSubmitting = true;
       
-      // this.recipeService.createRecipeWithImage(formData).subscribe({
-      //   next: (recipe) => {
-      //     this.recipeCreated.emit(recipe);
-      //     this.hideCreateForm();
-      //     alert('Рецепт успішно створено!');
-      //   },
-      //   error: (error) => {
-      //     console.error('Error creating recipe:', error);
-      //     alert('Помилка при створенні рецепту. Спробуйте ще раз.');
-      //   },
-      //   complete: () => {
-      //     this.isSubmitting = false;
-      //   }
-      // });
-    }
+    //   const formData = this.prepareFormData();
+      
+    //   console.log('=== FormData content ===');
+    //   formData.forEach((value, key) => {
+    //     console.log(`${key}:`, value);
+    //   });
+
+
+    //   this.recipeService.createRecipe(formData).subscribe({
+    //     next: (recipe) => {
+    //       this.recipeCreated.emit(recipe);
+    //       this.hideCreateForm();
+    //       alert('Рецепт успішно створено!');
+    //     },
+    //     error: (error) => {
+    //       console.error('Error creating recipe:', error);
+    //       alert('Помилка при створенні рецепту. Спробуйте ще раз.');
+    //     },
+    //     complete: () => {
+    //       this.isSubmitting = false;
+    //     }
+    //   });
+    // }
   }
 
-  prepareFormData(): FormData {
-    const formValue = this.recipeForm.value;
-    const formData = new FormData();
-    
-    // Add image file if selected
-    if (this.selectedFile) {
-      formData.append('recipeImage', this.selectedFile);
-    }
-    
-    // Extract names from characteristic arrays and filter empty ones
-    const allergens = this.extractCharacteristicNames(formValue.allergens);
-    const cuisines = this.extractCharacteristicNames(formValue.cuisines);
-    const diets = this.extractCharacteristicNames(formValue.diets);
-    const tags = this.extractCharacteristicNames(formValue.tags);
+  // Додайте цей метод до вашого RecipeFormComponent
+private prepareFormData(): FormData {
+  const formData = new FormData();
+  const formValue = this.recipeForm.value;
 
-    // Add form data as JSON or individual fields
-    const recipeData = {
-      ...formValue,
-      allergens,
-      cuisines,
-      diets,
-      tags,
-      isUserCreated: true
-    };
+  // Додаємо прості поля
+  formData.append('title', formValue.title || '');
+  formData.append('description', formValue.description || '');
+  formData.append('categoryId', formValue.categoryId || '');
+  formData.append('cookingTime', formValue.cookingTime?.toString() || '0');
+  formData.append('difficulty', formValue.difficulty || 'Easy');
+  formData.append('serving', formValue.servings?.toString() || '1');
+  formData.append('calories', formValue.calories?.toString() || '0');
+  formData.append('protein', formValue.protein?.toString() || '0');
+  formData.append('fat', formValue.fat?.toString() || '0');
+  formData.append('carbohydrates', formValue.carbohydrates?.toString() || '0');
+  formData.append('cuisine', formValue.cuisine || '');
 
-    // Remove image-related fields from JSON data
-    delete recipeData.imageUrl;
+  // Додаємо масиви (списки) - КЛЮЧОВИЙ МОМЕНТ!
+  // ASP.NET Core model binding для списків потребує індексації
+  
+  // Інгредієнти - формуємо як рядки "кількість одиниця назва"
+  const ingredientsList = formValue.ingredients
+    .filter((ing: any) => ing.name && ing.name.trim())
+    .map((ing: any) => `${ing.amount} ${ing.unit} ${ing.name}`.trim());
+  
+  ingredientsList.forEach((ingredient: string, index: number) => {
+    formData.append(`ingredients[${index}]`, ingredient);
+  });
 
-    // Add recipe data as JSON string
-    formData.append('recipeData', JSON.stringify(recipeData));
+  // Інструкції
+  const directionsList = formValue.instructions
+    .filter((inst: any) => inst.step && inst.step.trim())
+    .map((inst: any) => inst.step.trim());
     
-    return formData;
+  directionsList.forEach((direction: string, index: number) => {
+    formData.append(`directions[${index}]`, direction);
+  });
+
+  // Алергени
+  const allergensList = this.extractCharacteristicNames(formValue.allergens);
+  allergensList.forEach((allergen: string, index: number) => {
+    formData.append(`allergens[${index}]`, allergen);
+  });
+
+  // Дієти
+  const dietsList = this.extractCharacteristicNames(formValue.diets);
+  dietsList.forEach((diet: string, index: number) => {
+    formData.append(`diets[${index}]`, diet);
+  });
+
+  // Теги
+  const tagsList = this.extractCharacteristicNames(formValue.tags);
+  tagsList.forEach((tag: string, index: number) => {
+    formData.append(`tags[${index}]`, tag);
+  });
+
+  // Кухня (якщо у вас є масив кухонь)
+  // const cuisinesList = this.extractCharacteristicNames(formValue.cuisines);
+  // if (cuisinesList.length > 0) {
+  //   formData.append('cuisine', cuisinesList[0]); // Беремо першу кухню
+  // }
+
+  // Файл зображення
+  if (this.selectedFile) {
+    formData.append('image', this.selectedFile, this.selectedFile.name);
   }
+
+  return formData;
+}
+
 
   extractCharacteristicNames(characteristics: any[]): string[] {
     return characteristics

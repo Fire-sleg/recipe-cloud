@@ -9,21 +9,26 @@ namespace RecipeService.Services
         private readonly IAmazonS3 _s3Client;
         private readonly string _bucketName;
 
+        private readonly string _publicBaseUrl;
+
         public MinIOService(IConfiguration configuration)
         {
             var s3Config = new AmazonS3Config
             {
-                ServiceURL = configuration["MinIO:ServiceURL"], // e.g., http://localhost:9000
+                ServiceURL = configuration["MinIO:ServiceURL"], // внутрішній доступ
                 ForcePathStyle = true
             };
             _s3Client = new AmazonS3Client(
                 configuration["MinIO:AccessKey"],
                 configuration["MinIO:SecretKey"],
                 s3Config);
+
             _bucketName = configuration["MinIO:BucketName"];
+            _publicBaseUrl = configuration["MinIO:PublicBaseUrl"];
 
             EnsureBucketExistsAsync().GetAwaiter().GetResult();
         }
+
 
         private async Task EnsureBucketExistsAsync()
         {
@@ -98,15 +103,16 @@ namespace RecipeService.Services
                 BucketName = _bucketName,
                 Key = fileName,
                 InputStream = file.OpenReadStream(),
-                ContentType = file.ContentType
+                ContentType = file.ContentType,
+                CannedACL = S3CannedACL.PublicRead
             };
-
-            putRequest.CannedACL = S3CannedACL.PublicRead;
 
             await _s3Client.PutObjectAsync(putRequest);
 
-            return $"{_s3Client.Config.ServiceURL}/{_bucketName}/{fileName}";
+            // Повертаємо публічний URL
+            return $"{_publicBaseUrl}/{_bucketName}/{fileName}";
         }
+
 
         public async Task DeleteImageAsync(string fileName)
         {

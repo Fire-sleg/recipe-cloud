@@ -10,8 +10,8 @@ namespace RecipeService.Models.Recipes.DTOs
         [MaxLength(1000)]
         public string Description { get; set; }
 
-        [Required, MinLength(1)]
-        public List<string> Ingredients { get; set; }
+        public Guid CategoryId { get; set; }
+
 
         [Range(1, int.MaxValue)]
         public int CookingTime { get; set; }
@@ -19,14 +19,7 @@ namespace RecipeService.Models.Recipes.DTOs
         [Required, MaxLength(20)]
         public string Difficulty { get; set; }
 
-        public List<string> Diets { get; set; } = new List<string>();
-
-        public List<string> Allergens { get; set; } = new List<string>();
-
-        [MaxLength(50)]
-        public string Cuisine { get; set; }
-
-        public List<string> Tags { get; set; } = new List<string>();
+        public int Serving { get; set; }
 
         [Range(0, int.MaxValue)]
         public int Calories { get; set; }
@@ -40,14 +33,24 @@ namespace RecipeService.Models.Recipes.DTOs
         [Range(0, double.MaxValue)]
         public double Carbohydrates { get; set; }
 
-        public bool IsPremium { get; set; }
+        public List<string> Diets { get; set; } = new List<string>();
+
+        public List<string> Allergens { get; set; } = new List<string>();
+
+        [MaxLength(50)]
+        public string? Cuisine { get; set; }
+
+        public List<string> Tags { get; set; } = new List<string>();
+
+
+
+        [Required, MinLength(1)]
+        public List<string> Ingredients { get; set; } = new List<string>();
+
         public List<string> Directions { get; set; } = new List<string>();
-        public int Serving { get; set; }
-        public Guid CategoryId { get; set; }
 
 
-        /*For testing*/
-        public string ImageUrl { get; set; }
-        public string CreatedByUsername { get; set; }
+        public IFormFile? Image { get; set; }
+
     }
 }
