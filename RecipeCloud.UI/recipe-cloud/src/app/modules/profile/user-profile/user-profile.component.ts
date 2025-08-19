@@ -15,7 +15,6 @@ import { Recipe } from '../../../core/models/recipe.model';
 })
 export class UserProfileComponent implements OnInit {
   userRecipes: Recipe[] = [];
-  userCollections: Collection[] = [];
   profileForm!: FormGroup;
   isSubmitting = false;
   activeTab: 'preferences' | 'recipes' | 'collections' = 'preferences';
@@ -242,66 +241,9 @@ export class UserProfileComponent implements OnInit {
     }
   }
 
-  // Collection management methods
-  createNewCollection(): void {
-    const name = prompt('Введіть назву нової колекції:');
-    if (name && name.trim()) {
-      const newCollection: Collection = {
-        id: Date.now().toString(),
-        title: name.trim(),
-        recipes: [],
-        createdAt: new Date(),
-        createdBy: '',
-        updatedAt: new Date(),
-        totalCalories: 0,
-        totalProtein: 0,
-        totalFat: 0,
-        totalCarbohydrates: 0
-      };
-      // this.userCollections.push(newCollection);
-      console.log('New collection created:', newCollection);
-    }
-  }
+  
 
-  editCollection(collectionId: string): void {
-    // const collection = this.userCollections.find(c => c.id === collectionId);
-    // if (collection) {
-    //   const newName = prompt('Введіть нову назву колекції:', collection.name);
-    //   if (newName && newName.trim()) {
-    //     collection.name = newName.trim();
-    //     console.log('Collection updated:', collection);
-    //   }
-    // }
-  }
-
-  deleteCollection(collectionId: string): void {
-    if (confirm('Ви впевнені, що хочете видалити цю колекцію?')) {
-      // this.userCollections = this.userCollections.filter(c => c.id !== collectionId);
-      console.log('Collection deleted:', collectionId);
-    }
-  }
-
-  addRecipeToCollection(collectionId: string): void {
-    // This would typically open a modal with available recipes to add
-    console.log('Adding recipe to collection:', collectionId);
-    // For demo purposes, let's add a random recipe
-    // const collection = this.userCollections.find(c => c.id === collectionId);
-    // if (collection && this.userRecipes.length > 0) {
-    //   const recipeToAdd = this.userRecipes[0]; // Just add the first recipe for demo
-    //   if (!collection.recipes.find(r => r.id === recipeToAdd.id)) {
-    //     collection.recipes.push(recipeToAdd);
-    //     console.log('Recipe added to collection');
-    //   }
-    // }
-  }
-
-  removeFromCollection(collectionId: string, recipeId: string): void {
-    // const collection = this.userCollections.find(c => c.id === collectionId);
-    // if (collection) {
-    //   collection.recipes = collection.recipes.filter(r => r.id !== recipeId);
-    //   console.log('Recipe removed from collection');
-    // }
-  }
+  
 
   // Utility methods for displaying selected preferences
   getSelectedDiets(): string[] {

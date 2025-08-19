@@ -419,14 +419,12 @@
         <button 
           type="submit" 
           class="btn btn-submit"
-          >
-          <!-- [disabled]="recipeForm.invalid || isSubmitting" -->
-          <!-- <span *ngIf="isSubmitting">
+          [disabled]="recipeForm.invalid || isSubmitting">
+          <span *ngIf="isSubmitting">
             <i class="fas fa-spinner fa-spin"></i>
             Створення...
-          </span> -->
-          <!-- *ngIf="!isSubmitting" -->
-          <span >
+          </span>
+          <span *ngIf="!isSubmitting">
             Створити рецепт
           </span>
         </button>

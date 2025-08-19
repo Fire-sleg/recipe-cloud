@@ -1,0 +1,455 @@
+.collections-container {
+  background-color: #fefefe;
+  min-height: 100vh;
+}
+
+.base-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.collections-section {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  box-shadow: 0 4px 20px rgba(222, 196, 170, 0.2);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.collections-section:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(222, 196, 170, 0.3);
+}
+
+.section-header {
+  margin-bottom: 24px;
+  border-bottom: 3px solid #f0ebe5;
+  padding-bottom: 16px;
+}
+
+.section-title {
+  color: #2c2c2c;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.section-icon {
+  font-size: 1.3rem;
+}
+
+.section-description {
+  color: #666;
+  font-size: 1rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.collections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.collection-card {
+  background: #faf9f7;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  animation: fadeIn 0.5s ease-out;
+  position: relative;
+}
+
+.collection-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(222, 196, 170, 0.3);
+  border-color: #dec4aa;
+}
+
+.collection-header {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid #f0ebe5;
+}
+
+.collection-name {
+  color: #2c2c2c;
+  font-size: 1.3rem;
+  font-weight: 600;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.collection-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.recipe-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(222, 196, 170, 0.1);
+  padding: 6px 12px;
+  border-radius: 20px;
+}
+
+.collection-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.action-btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: center;
+}
+
+.action-btn.small {
+  padding: 6px 10px;
+  font-size: 0.8rem;
+  min-width: auto;
+}
+
+.action-btn.edit {
+  background: rgba(72, 187, 120, 0.1);
+  color: #48bb78;
+}
+
+.action-btn.edit:hover {
+  background: #48bb78;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.action-btn.delete {
+  background: rgba(245, 101, 101, 0.1);
+  color: #f56565;
+}
+
+.action-btn.delete:hover {
+  background: #f56565;
+  color: white;
+  transform: translateY(-2px);
+}
+
+.collection-recipes {
+  max-height: 300px;
+  overflow-y: auto;
+  padding: 16px 20px;
+}
+
+.collection-recipe {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  margin-bottom: 8px;
+  background: rgba(222, 196, 170, 0.05);
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.collection-recipe:hover {
+  background: rgba(222, 196, 170, 0.1);
+  transform: translateX(4px);
+}
+
+.recipe-thumb {
+  width: 50px;
+  height: 50px;
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #f0ebe5, #dec4aa);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+}
+
+.recipe-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.recipe-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.recipe-title {
+  color: #2c2c2c;
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recipe-time {
+  color: #666;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.remove-recipe-btn {
+  background: rgba(245, 101, 101, 0.1);
+  color: #f56565;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.8rem;
+}
+
+.remove-recipe-btn:hover {
+  background: #f56565;
+  color: white;
+  transform: scale(1.1);
+}
+
+.remove-recipe-btn:hover::after {
+  content: "✕";
+  color: white;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.9rem;
+  font-weight: bold;
+}
+
+.empty-collection {
+  padding: 30px 20px;
+  text-align: center;
+  color: #666;
+}
+
+.empty-collection p {
+  margin-bottom: 16px;
+  font-style: italic;
+}
+
+.add-recipe-btn {
+  background: rgba(222, 196, 170, 0.15); /* теплий пастельний фон */
+  color: #b08d67; /* насичений теплий текст */
+  border: none;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 8px rgba(222, 196, 170, 0.2);
+}
+
+.add-recipe-btn:hover {
+  background: linear-gradient(135deg, #dec4aa, #c9b296);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(222, 196, 170, 0.4);
+}
+.plus-icon {
+    color: #b08d67;
+}
+
+
+.collection-footer {
+  padding: 16px 20px;
+  border-top: 1px solid #f0ebe5;
+  text-align: center;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #666;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 24px;
+  opacity: 0.7;
+}
+
+.empty-state h3 {
+  color: #2c2c2c;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 16px;
+}
+
+.empty-state p {
+  font-size: 1.1rem;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  max-width: 400px;
+  margin: 0 auto 32px auto;
+}
+
+.create-collection-btn {
+  background: linear-gradient(135deg, #dec4aa, #c9b296);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  border-radius: 12px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 16px rgba(222, 196, 170, 0.4);
+}
+
+.create-collection-btn:hover {
+  background: linear-gradient(135deg, #c9b296, #b8a285);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(222, 196, 170, 0.5);
+}
+
+/* Responsive design */
+@media (max-width: 1024px) {
+  .collections-grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .collections-container {
+    padding: 20px 16px;
+  }
+
+  .collections-section {
+    padding: 24px 20px;
+  }
+
+  .section-title {
+    font-size: 1.3rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .collections-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .collection-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .collection-actions {
+    align-self: flex-end;
+  }
+}
+
+@media (max-width: 480px) {
+  .collections-section {
+    padding: 20px 16px;
+  }
+
+  .collection-card {
+    margin: 0 -4px;
+  }
+
+  .collection-header {
+    padding: 16px;
+  }
+
+  .collection-recipes {
+    padding: 12px 16px;
+  }
+
+  .empty-state {
+    padding: 40px 16px;
+  }
+
+  .empty-state h3 {
+    font-size: 1.3rem;
+  }
+
+  .empty-state p {
+    font-size: 1rem;
+  }
+
+  .create-collection-btn {
+    padding: 14px 24px;
+    font-size: 1rem;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.collection-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+.collection-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.collection-card:nth-child(4) {
+  animation-delay: 0.3s;
+}
+.collection-card:nth-child(5) {
+  animation-delay: 0.4s;
+}
+.collection-card:nth-child(6) {
+  animation-delay: 0.5s;
+}
+
+/* Custom scrollbar */
+.collection-recipes::-webkit-scrollbar {
+  width: 6px;
+}
+
+.collection-recipes::-webkit-scrollbar-track {
+  background: #f0ebe5;
+  border-radius: 3px;
+}
+
+.collection-recipes::-webkit-scrollbar-thumb {
+  background: #dec4aa;
+  border-radius: 3px;
+}
+
+.collection-recipes::-webkit-scrollbar-thumb:hover {
+  background: #c9b296;
+}

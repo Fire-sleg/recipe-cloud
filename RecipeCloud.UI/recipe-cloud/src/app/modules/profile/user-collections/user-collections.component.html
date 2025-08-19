@@ -1,0 +1,55 @@
+<div class="collections-container">
+        <div class="base-container">
+            <div class="collections-section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <span class="section-icon">📚</span>
+                        Мої колекції рецептів
+                    </h2>
+                    <p class="section-description">Організуйте улюблені рецепти у тематичні колекції</p>
+                </div>
+
+                <!-- Collections with content -->
+                <div class="collections-grid" *ngFor="let collection of collections">
+                    <div class="collection-card">
+                        <div class="collection-header">
+                            <h3 class="collection-name">{{collection.title}}</h3>
+                            <div class="collection-meta">
+                                <span class="recipe-count">📝 {{collection.recipes.length}} рецептів</span>
+                                <div class="collection-actions">
+                                    <button class="action-btn small edit" title="Редагувати">✏️</button>
+                                    <button class="action-btn small delete" title="Видалити">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="collection-recipes" *ngFor="let recipe of collection.recipes">
+                            <div class="collection-recipe">
+                                <div class="recipe-thumb">🍝</div>
+                                <div class="recipe-details">
+                                    <h4 class="recipe-title">{{recipe.title}}</h4>
+                                    <p class="recipe-time">⏱️ {{recipe.cookingTime}} хв</p>
+                                </div>
+                                <button class="remove-recipe-btn" title="Видалити з колекції">❌</button>
+                            </div>
+                        </div>
+
+                        <div class="collection-footer">
+                            <button class="add-recipe-btn"><span class="plus-icon">+</span> Додати рецепт</button>
+                        </div>
+                    </div>
+
+                    
+                </div>
+
+                
+            </div>
+        </div>
+        <!-- Button to create new collection -->
+                <div style="text-align: center; margin-top: 40px;">
+                    <app-collection-form></app-collection-form>
+                    <!-- <button class="create-collection-btn">
+                        <span>➕</span> Створити нову колекцію
+                    </button> -->
+                </div>
+    </div>

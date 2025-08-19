@@ -58,7 +58,7 @@ namespace RecipeService.Controllers
         {
             try
             {
-                var list = await _dbRecipe.GetAllAsync(null, paginationParams);
+                var list = await _dbRecipe.GetAllAsync(filter:null, paginationParams);
                 var recipes = _mapper.Map<List<RecipeDTO>>(list);
 
                 var totalCount = await _dbRecipe.CountAsync();
@@ -125,7 +125,7 @@ namespace RecipeService.Controllers
             return Ok(recipe);
         }
 
-        [HttpGet("user/{id:guid}")]
+        [HttpGet("user/{userId:guid}")]
         public async Task<IActionResult> GetByUserIdAsync(Guid userId)
         {
             var list = await _dbRecipe.GetAllAsync(u => u.CreatedBy == userId);

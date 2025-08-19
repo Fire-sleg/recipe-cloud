@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Recipe } from '../models/recipe.model';
-import { PagedResponse } from '../models/paged-response';
+import { APIResponse, PagedResponse } from '../models/paged-response';
 import { CheckboxFilter } from '../models/checkboxfilter.model';
 import { Rating } from '../models/rating.model';
 
@@ -13,11 +13,11 @@ import { Rating } from '../models/rating.model';
 export class RecipeService {
   constructor(private http: HttpClient) {}
 
-  getRecipes(page: number, pageSize: number): Observable<{ data: Recipe[], total: number }> {
+  getRecipes(page: number, pageSize: number): Observable<(APIResponse<PagedResponse<Recipe>>)> {
     const params = new HttpParams()
       .set('page', page.toString())
       .set('pageSize', pageSize.toString());
-    return this.http.get<{ data: Recipe[], total: number }>(`${environment.apiUrl}/recipes`, { params });
+    return this.http.get<APIResponse<PagedResponse<Recipe>>>(`${environment.apiUrl}/recipes`, { params });
   }
   getByTransliteratedName(transliteratedName: string){
     return this.http.get<Recipe>(`${environment.apiUrl}/recipes/` + transliteratedName);

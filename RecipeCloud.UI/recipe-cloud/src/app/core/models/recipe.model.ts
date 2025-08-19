@@ -3,7 +3,7 @@ import { BreadcrumbItem } from "./breadcrumb.model";
 export interface Recipe {
     id: string;
     title: string;
-    description?: string;
+    description: string;
     ingredients: string[];
     cookingTime: number;
     difficulty: 'easy' | 'medium' | 'hard';

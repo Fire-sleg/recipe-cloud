@@ -19,7 +19,7 @@ export class RecipeFormComponent implements OnInit {
 
   categories: Category[] | null = null;
   recipeForm: FormGroup;
-  // isSubmitting = false;
+  isSubmitting = false;
   showForm = false;
   
   // File upload properties
@@ -309,32 +309,7 @@ export class RecipeFormComponent implements OnInit {
   // Form submission
   onSubmit(): void {
 
-    const formData = this.prepareFormData();
-      
-      console.log('=== FormData content ===');
-      formData.forEach((value, key) => {
-        console.log(`${key}:`, value);
-      });
-
-
-      this.recipeService.createRecipe(formData).subscribe({
-        next: (recipe) => {
-          this.recipeCreated.emit(recipe);
-          this.hideCreateForm();
-          alert('Рецепт успішно створено!');
-        },
-        error: (error) => {
-          console.error('Error creating recipe:', error);
-          alert('Помилка при створенні рецепту. Спробуйте ще раз.');
-        },
-        complete: () => {
-          // this.isSubmitting = false;
-        }
-      });
-    // if (this.recipeForm.valid && !this.isSubmitting) {
-    //   this.isSubmitting = true;
-      
-    //   const formData = this.prepareFormData();
+    // const formData = this.prepareFormData();
       
     //   console.log('=== FormData content ===');
     //   formData.forEach((value, key) => {
@@ -353,10 +328,35 @@ export class RecipeFormComponent implements OnInit {
     //       alert('Помилка при створенні рецепту. Спробуйте ще раз.');
     //     },
     //     complete: () => {
-    //       this.isSubmitting = false;
+    //       // this.isSubmitting = false;
     //     }
     //   });
-    // }
+    if (this.recipeForm.valid && !this.isSubmitting) {
+      this.isSubmitting = true;
+      
+      const formData = this.prepareFormData();
+      
+      console.log('=== FormData content ===');
+      formData.forEach((value, key) => {
+        console.log(`${key}:`, value);
+      });
+
+
+      this.recipeService.createRecipe(formData).subscribe({
+        next: (recipe) => {
+          this.recipeCreated.emit(recipe);
+          this.hideCreateForm();
+          alert('Рецепт успішно створено!');
+        },
+        error: (error) => {
+          console.error('Error creating recipe:', error);
+          alert('Помилка при створенні рецепту. Спробуйте ще раз.');
+        },
+        complete: () => {
+          this.isSubmitting = false;
+        }
+      });
+    }
   }
 
   // Додайте цей метод до вашого RecipeFormComponent
@@ -376,9 +376,6 @@ private prepareFormData(): FormData {
   formData.append('fat', formValue.fat?.toString() || '0');
   formData.append('carbohydrates', formValue.carbohydrates?.toString() || '0');
   formData.append('cuisine', formValue.cuisine || '');
-
-  // Додаємо масиви (списки) - КЛЮЧОВИЙ МОМЕНТ!
-  // ASP.NET Core model binding для списків потребує індексації
   
   // Інгредієнти - формуємо як рядки "кількість одиниця назва"
   const ingredientsList = formValue.ingredients

@@ -14,7 +14,7 @@ using System.Security.Claims;
 
 namespace RecipeService.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/collections")]
     [ApiController]
     public class CollectionController : ControllerBase
     {
@@ -99,10 +99,9 @@ namespace RecipeService.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "User")]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
-        public async Task<ActionResult<APIResponse>> CreateCollectionAsync([FromBody] CollectionCreateDTO createDTO)
+        public async Task<ActionResult<APIResponse>> CreateCollectionAsync([FromForm] CollectionCreateDTO createDTO)
         {
             try
             {
@@ -129,7 +128,7 @@ namespace RecipeService.Controllers
                 }
 
                 var collection = _mapper.Map<Collection>(createDTO);
-                collection.CreatedBy = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                collection.CreatedBy = Guid.Parse(User.FindFirst("ident")?.Value);
 
                 if (createDTO.RecipeIds.Any())
                 {
@@ -160,7 +159,6 @@ namespace RecipeService.Controllers
         }
 
         [HttpPut("{id:guid}", Name = "UpdateCollection")]
-        [Authorize(Roles = "User")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
@@ -245,7 +243,6 @@ namespace RecipeService.Controllers
         }
 
         [HttpDelete("{id:guid}", Name = "DeleteCollection")]
-        [Authorize(Roles = "User")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -289,6 +286,14 @@ namespace RecipeService.Controllers
                 _response.ErrorsMessages.Add(ex.ToString());
                 return StatusCode(StatusCodes.Status500InternalServerError, _response);
             }
+        }
+
+        [HttpGet("user/{userId:guid}")]
+        public async Task<IActionResult> GetByUserIdAsync(Guid userId)
+        {
+            var list = await _dbCollection.GetAllAsync(u => u.CreatedBy == userId);
+            var collections = _mapper.Map<List<CollectionDTO>>(list);
+            return Ok(collections);
         }
 
         private void UpdateNutritionalValues(Collection collection)

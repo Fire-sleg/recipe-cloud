@@ -8,28 +8,16 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatListModule } from '@angular/material/list';
 import { RouterModule, Routes } from '@angular/router';
-import { UserProfileComponent } from './user-profile/user-profile.component';
 import { SharedModule } from '../shared/shared.module';
-import { RecipeFormComponent } from '../recipes/recipe-form/recipe-form.component';
-import { RecipeSharedModule } from '../recipes/recipe-shared.module';
-import { UserRecipesComponent } from './user-recipes/user-recipes.component';
-import { UserCollectionsComponent } from './user-collections/user-collections.component';
-import { CollectionSharedModule } from "../collections/collection-shared.module";
-
-const routes: Routes = [
-  { path: '', component: UserProfileComponent }
-];
-
-
+import { AuthGuard } from '../../core/guards/auth.guard';
+import { CollectionFormComponent } from './collection-form/collection-form.component';
+import { CollectionSharedModule } from './collection-shared.module';
 
 @NgModule({
   declarations: [
-    UserProfileComponent,
-    UserRecipesComponent,
-    UserCollectionsComponent
+    
   ],
   imports: [
-    RecipeSharedModule,
     FormsModule,
     CommonModule,
     ReactiveFormsModule,
@@ -40,8 +28,7 @@ const routes: Routes = [
     MatButtonModule,
     MatListModule,
     SharedModule,
-    RouterModule.forChild(routes),
     CollectionSharedModule
-]
+  ]
 })
-export class UserModule { }
+export class CollectionsModule { }
