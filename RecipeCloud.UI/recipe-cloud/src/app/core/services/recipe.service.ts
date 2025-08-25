@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, catchError, Observable, of, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Recipe } from '../models/recipe.model';
 import { APIResponse, PagedResponse } from '../models/paged-response';
@@ -13,6 +13,9 @@ import { Rating } from '../models/rating.model';
 export class RecipeService {
   constructor(private http: HttpClient) {}
 
+  private recipesByUserSubject = new BehaviorSubject<Recipe[]>([]);
+  recipesByUser$ = this.recipesByUserSubject.asObservable();
+
   getRecipes(page: number, pageSize: number): Observable<(APIResponse<PagedResponse<Recipe>>)> {
     const params = new HttpParams()
       .set('page', page.toString())
@@ -22,24 +25,73 @@ export class RecipeService {
   getByTransliteratedName(transliteratedName: string){
     return this.http.get<Recipe>(`${environment.apiUrl}/recipes/` + transliteratedName);
   }
-  getByUserId(userId: string){
-    return this.http.get<Recipe[]>(`${environment.apiUrl}/recipes/user/` + userId);
-  }
-
-  getRecipeById(id: string): Observable<Recipe> {
+   getRecipeById(id: string): Observable<Recipe> {
     return this.http.get<Recipe>(`${environment.apiUrl}/recipes/${id}`);
   }
+  // getByUserId(userId: string){
+  //   return this.http.get<Recipe[]>(`${environment.apiUrl}/recipes/user/` + userId);
+  // }
 
+  // createRecipe(recipe: FormData): Observable<Recipe> {
+  //   return this.http.post<Recipe>(`${environment.apiUrl}/recipes`, recipe);
+  // }
+
+  // updateRecipe(id: string, recipe: FormData): Observable<Recipe> {
+  //   return this.http.put<Recipe>(`${environment.apiUrl}/recipes/${id}`, recipe);
+  // }
+
+  // deleteRecipe(id: string): Observable<void> {
+  //   return this.http.delete<void>(`${environment.apiUrl}/recipes/${id}`);
+  // }
+
+   /** Завантаження рецептів користувача */
+  getByUserId(userId: string): Observable<Recipe[]> {
+    return this.http.get<Recipe[]>(`${environment.apiUrl}/recipes/user/${userId}`).pipe(
+      tap(recipes => this.recipesByUserSubject.next(recipes)),
+      catchError(err => {
+        console.error('Error loading recipes', err);
+        this.recipesByUserSubject.next([]); // fallback на порожній список
+        return of([]);
+      })
+    );
+  }
+
+  /** Створення рецепту */
   createRecipe(recipe: FormData): Observable<Recipe> {
-    return this.http.post<Recipe>(`${environment.apiUrl}/recipes`, recipe);
+    return this.http.post<Recipe>(`${environment.apiUrl}/recipes`, recipe).pipe(
+      tap(newRecipe => {
+        console.log('New recipe added:', newRecipe);
+        const updated = [...this.recipesByUserSubject.value, newRecipe];
+        this.recipesByUserSubject.next(updated);
+      })
+    );
   }
 
+  /** Оновлення рецепту */
   updateRecipe(id: string, recipe: FormData): Observable<Recipe> {
-    return this.http.put<Recipe>(`${environment.apiUrl}/recipes/${id}`, recipe);
+    return this.http.put<Recipe>(`${environment.apiUrl}/recipes/${id}`, recipe).pipe(
+      tap(updatedRecipe => {
+        console.log('Recipe updated:', updatedRecipe);
+        const updated = this.recipesByUserSubject.value.map(r =>
+          r.id === id ? updatedRecipe : r
+        );
+        this.recipesByUserSubject.next(updated);
+      })
+    );
   }
 
+  /** Видалення рецепту */
   deleteRecipe(id: string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/recipes/${id}`);
+    return this.http.delete<void>(`${environment.apiUrl}/recipes/${id}`).pipe(
+      tap(() => {
+        const updated = this.recipesByUserSubject.value.filter(r => r.id !== id);
+        this.recipesByUserSubject.next(updated);
+      }),
+      catchError(err => {
+        console.error('Error deleting recipe', err);
+        return of(undefined);
+      })
+    );
   }
 
   incrementViewCount(recipeId: string): Observable<any> {
@@ -58,6 +110,8 @@ export class RecipeService {
   getRecipeRating(recipeId: string): Observable<Rating> {
     return this.http.get<Rating>(`${environment.apiUrl}/rating/get-rating/${recipeId}`);
   }
+
+
 
 
   getFilterRecipes(filters: any, pageNumber: number, pageSize: number, sortOrder: string): Observable<PagedResponse<Recipe>> {
@@ -88,6 +142,8 @@ export class RecipeService {
       `${environment.apiUrl}/recipes/checkboxfilter`,
       { params }
     );
+
+  
 }
 
 

@@ -13,5 +13,7 @@ namespace RecipeService.Repository
         Task RemoveAsync(Collection entity);
         Task SaveAsync();
         Task<int> CountAsync(Expression<Func<Collection, bool>>? filter = null);
+        Task<Collection?> AddRecipeToCollection(Guid collectionId, Guid recipeId);
+        Task<Collection?> RemoveRecipeFromCollectionAsync(Guid collectionId, Guid recipeId);
     }
 }

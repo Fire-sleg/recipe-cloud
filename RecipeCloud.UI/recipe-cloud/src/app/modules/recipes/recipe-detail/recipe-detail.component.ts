@@ -1,12 +1,13 @@
-
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, DestroyRef, inject } from '@angular/core';
 import { Recipe } from '../../../core/models/recipe.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { CategoryService } from '../../../core/services/category.service';
 import { RecipeService } from '../../../core/services/recipe.service';
 import { AuthService } from '../../../core/services/auth.service';
-import { ViewHistory } from '../../../core/models/view-history.model';
+import { CollectionService } from '../../../core/services/collection.service';
 import { User } from '../../../core/models/user.model';
+import { Collection } from '../../../core/models/collection.model';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-recipe-detail',
@@ -17,7 +18,6 @@ export class RecipeDetailComponent implements OnInit {
   @Input() recipe: Recipe | undefined;
   
   // Rating properties
-
   userRating: number = 0;
   hoverRating: number = 0;
   isRatingSubmitted: boolean = false;
@@ -25,25 +25,68 @@ export class RecipeDetailComponent implements OnInit {
   ratings: number[] = [1, 2, 3, 4, 5];
   currentUser: User | null = null;
 
-  onImageError(event: Event): void {
-    const img = event.target as HTMLImageElement;
-    img.src = 'assets/hrechani-mlyntsi.webp';
-  }
+  // Edit mode
+  showEditForm: boolean = false;
+  categoryTransliteratedName: string | undefined;
+
+  // Collection properties
+  showCollectionModal: boolean = false;
+  collections: Collection[] = [];
+  selectedCollectionId: string | null = null;
+  newCollectionName: string = '';
+  newCollectionError: string = '';
+  successMessage: string | null = null;
+  errorMessage: string | null = null;
+
+  // Destroy ref for subscription cleanup
+  private destroyRef: DestroyRef = inject(DestroyRef);
 
   constructor(
     private route: ActivatedRoute,
     private recipeService: RecipeService,
-    private authService: AuthService
+    private authService: AuthService,
+    private router: Router,
+    private categoryService: CategoryService,
+    private collectionService: CollectionService
   ) {}
 
   ngOnInit(): void {
-    // Check if user is authenticated
     this.isAuthenticated = this.authService.isAuthenticated();
     const userJson = localStorage.getItem("user");
     this.currentUser = userJson ? JSON.parse(userJson) : null;
 
+    // Subscribe to collection service messages
+    this.collectionService.successMessage$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(message => {
+        this.successMessage = message;
+        if (message) {
+          setTimeout(() => {
+            this.collectionService.successMessage$.next(null);
+            this.successMessage = null;
+          }, 3000); // Clear message after 3 seconds
+        }
+      });
 
-    
+    this.collectionService.errorMessage$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(message => {
+        this.errorMessage = message;
+        if (message) {
+          setTimeout(() => {
+            this.collectionService.errorMessage$.next(null);
+            this.errorMessage = null;
+          }, 3000); // Clear message after 3 seconds
+        }
+      });
+
+    // Subscribe to collections
+    this.collectionService.collectionsByUser$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(collections => {
+        this.collections = collections;
+      });
+
     this.route.paramMap.subscribe(params => {
       const transliteratedName = params.get('transliteratedName');
       if (transliteratedName) {
@@ -52,59 +95,159 @@ export class RecipeDetailComponent implements OnInit {
           this.incrementViewCount();
           this.getCurrentUserRating();
           this.sendViewHistory();
-          
-
+          if (this.recipe?.categoryId) {
+            this.categoryService.getCategoryById(this.recipe.categoryId).subscribe((category) => {
+              this.categoryTransliteratedName = category.transliteratedName;
+            });
+          }
         });
       }
     });
   }
 
-  // Перевірка чи може користувач редагувати рецепт
   canEditRecipe(): boolean {
     if (!this.recipe || !this.currentUser) {
       return false;
     }
-
-    // Адміністратор може редагувати будь-який рецепт
     if (this.currentUser.role === 'Admin') {
       return true;
     }
-
-    // Користувач може редагувати тільки свої рецепти
     return this.recipe.createdBy === this.currentUser.id;
   }
 
-  // Обробник кліку на кнопку редагування
   onEditRecipe(): void {
     if (!this.recipe || !this.canEditRecipe()) {
       return;
     }
-
-    // Перенаправлення на сторінку редагування
-
+    this.showEditForm = true;
   }
+
+  onRecipeUpdated(updatedRecipe: Recipe): void {
+    this.showEditForm = false;
+    if (updatedRecipe.transliteratedName) {
+      this.router.navigate(['recipes', 'detail', updatedRecipe.transliteratedName]);
+    } else {
+      this.recipeService.getRecipeById(updatedRecipe.id).subscribe({
+        next: (recipe) => {
+          this.recipe = recipe;
+          if (recipe.transliteratedName) {
+            this.router.navigate(['recipes', 'detail', recipe.transliteratedName]);
+          }
+        },
+        error: (error) => {
+          console.error('Error fetching updated recipe:', error);
+        }
+      });
+    }
+  }
+
+  onFormClosed(): void {
+    this.showEditForm = false;
+  }
+
   onDeleteRecipe(): void {
     if (!this.recipe || !this.canEditRecipe()) {
       return;
     }
-
-    // Перенаправлення на сторінку підтвердження видалення
-
+    if (confirm('Ви впевнені, що хочете видалити цей рецепт?')) {
+      this.recipeService.deleteRecipe(this.recipe.id).subscribe({
+        next: () => {
+          console.log("Successfully deleted");
+          this.router.navigate(['recipes', this.categoryTransliteratedName]);
+        },
+        error: (error) => {
+          console.error('Error deleting recipe:', error);
+        }
+      });
+    }
   }
-  onAddToCollection(): void{
-    
+
+  onAddToCollection(): void {
+    if (!this.isAuthenticated) {
+      this.collectionService.errorMessage$.next('Будь ласка, увійдіть в систему, щоб додати рецепт до колекції');
+      return;
+    }
+    if (!this.recipe?.id) {
+      return;
+    }
+
+    // Fetch user collections if not already loaded
+    if (this.collections.length === 0) {
+      const userId = this.authService.getCurrentUserId();
+      if (userId) {
+        this.collectionService.getByUserId(userId).subscribe();
+      }
+    }
+    this.showCollectionModal = true;
+    this.selectedCollectionId = null;
+    this.newCollectionName = '';
+    this.newCollectionError = '';
   }
 
-  private getCurrentUserRating(){
+  closeCollectionModal(): void {
+    this.showCollectionModal = false;
+    this.selectedCollectionId = null;
+    this.newCollectionName = '';
+    this.newCollectionError = '';
+  }
+
+  onNewCollectionNameChange(): void {
+    this.newCollectionError = '';
+    if (this.newCollectionName.trim()) {
+      this.selectedCollectionId = null;
+    }
+  }
+
+  confirmAddToCollection(): void {
+    if (!this.recipe?.id) {
+      return;
+    }
+
+    if (this.newCollectionName.trim()) {
+      // Prepare FormData for new collection
+      const formData = new FormData();
+      formData.append('title', this.newCollectionName.trim());
+      if (this.currentUser?.username) {
+        formData.append('createdByUsername', this.currentUser.username);
+      }
+      formData.append('recipeIds[0]', this.recipe.id);
+
+      this.collectionService.createCollection(formData).subscribe({
+        next: () => {
+          // Success message handled by collectionService.successMessage$
+          this.collectionService.getByUserId(this.authService.getCurrentUserId()!).subscribe();
+          this.closeCollectionModal();
+        },
+        error: (error) => {
+          console.error('Error creating collection:', error);
+          this.newCollectionError = 'Помилка при створенні колекції. Спробуйте ще раз.';
+        }
+      });
+    } else if (this.selectedCollectionId) {
+      // Add to existing collection
+      this.collectionService.addRecipeToCollection(this.selectedCollectionId, this.recipe.id).subscribe({
+        next: () => {
+          // Success message handled by collectionService.successMessage$
+          this.closeCollectionModal();
+        },
+        error: (error) => {
+          console.error('Error adding recipe to collection:', error);
+          this.newCollectionError = 'Помилка при додаванні рецепту до колекції. Спробуйте ще раз.';
+        }
+      });
+    } else {
+      this.newCollectionError = 'Будь ласка, оберіть колекцію або введіть назву нової.';
+    }
+  }
+
+  private getCurrentUserRating() {
     if (this.recipe?.id && this.isAuthenticated) {
       this.recipeService.getRecipeRating(this.recipe.id).subscribe({
         next: (rating) => {
-          if (this.recipe) {
-            this.userRating = rating.rating
-          }
+          this.userRating = rating.rating;
         },
         error: (error) => {
-          console.error('Failed to increment view count:', error);
+          console.error('Failed to get user rating:', error);
         }
       });
     }
@@ -114,7 +257,6 @@ export class RecipeDetailComponent implements OnInit {
     if (this.recipe?.id) {
       this.recipeService.incrementViewCount(this.recipe.id).subscribe({
         next: () => {
-          console.log('View count incremented successfully');
           if (this.recipe) {
             this.recipe.viewCount++;
           }
@@ -126,43 +268,24 @@ export class RecipeDetailComponent implements OnInit {
     }
   }
 
-
-
-  // Rating methods
-  onStarHover(rating: number): void {
-    if (!this.isAuthenticated) return;
-    this.hoverRating = rating;
-  }
-
-  onStarLeave(): void {
-    this.hoverRating = 0;
-  }
-
   onStarClick(rating: number): void {
     if (!this.isAuthenticated) {
-      alert('Будь ласка, увійдіть в систему, щоб оцінити рецепт');
+      this.collectionService.errorMessage$.next('Будь ласка, увійдіть в систему, щоб оцінити рецепт');
       return;
     }
 
     if (this.recipe?.id) {
-          debugger;
-
       this.recipeService.rateRecipe(this.recipe.id, rating).subscribe({
         next: (response) => {
           this.userRating = rating;
           this.isRatingSubmitted = true;
-          
-          
-          // Update recipe's average rating
           if (this.recipe && response.averageRating !== undefined) {
             this.recipe.averageRating = response.averageRating;
           }
-          
-          console.log('Rating submitted successfully');
         },
         error: (error) => {
           console.error('Failed to submit rating:', error);
-          alert('Помилка при збереженні оцінки. Спробуйте ще раз.');
+          this.collectionService.errorMessage$.next('Помилка при збереженні оцінки. Спробуйте ще раз.');
         }
       });
     }
@@ -183,15 +306,26 @@ export class RecipeDetailComponent implements OnInit {
     return 'Оцініть цей рецепт';
   }
 
+  onStarHover(rating: number): void {
+    if (!this.isAuthenticated) return;
+    this.hoverRating = rating;
+  }
+
+  onStarLeave(): void {
+    this.hoverRating = 0;
+  }
 
   sendViewHistory(): void {
-    if(this.recipe){
+    if (this.recipe?.id) {
       this.authService.logView(this.recipe.id).subscribe({
         next: () => console.log('View history logged'),
         error: err => console.error('Error logging view history', err)
       });
-
     }
-    
+  }
+
+  onImageError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    img.src = 'assets/hrechani-mlyntsi.webp';
   }
 }

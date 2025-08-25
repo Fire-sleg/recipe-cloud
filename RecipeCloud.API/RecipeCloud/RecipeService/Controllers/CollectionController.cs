@@ -158,11 +158,12 @@ namespace RecipeService.Controllers
             }
         }
 
+
         [HttpPut("{id:guid}", Name = "UpdateCollection")]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status403Forbidden)]
-        public async Task<ActionResult<APIResponse>> UpdateCollectionAsync(Guid id, [FromBody] CollectionUpdateDTO updateDTO)
+        public async Task<ActionResult<APIResponse>> UpdateCollectionAsync(Guid id, [FromForm] CollectionUpdateDTO updateDTO)
         {
             try
             {
@@ -182,10 +183,10 @@ namespace RecipeService.Controllers
                     _response.ErrorsMessages = validationResult.Errors.Select(e => e.ErrorMessage).ToList();
                     return BadRequest(_response);
                 }
-
+                List<Recipe> recipes = new List<Recipe>();
                 if (updateDTO.RecipeIds.Any())
                 {
-                    var recipes = await _dbRecipe.GetAllAsync(r => updateDTO.RecipeIds.Contains(r.Id));
+                    recipes = await _dbRecipe.GetAllAsync(r => updateDTO.RecipeIds.Contains(r.Id));
                     if (recipes.Count != updateDTO.RecipeIds.Count)
                     {
                         _response.StatusCode = HttpStatusCode.BadRequest;
@@ -195,7 +196,7 @@ namespace RecipeService.Controllers
                     }
                 }
 
-                var existingCollection = await _dbCollection.GetAsync(c => c.Id == id);
+                var existingCollection = await _dbCollection.GetAsync(c => c.Id == id, isTracked: true);
                 if (existingCollection == null)
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
@@ -203,7 +204,7 @@ namespace RecipeService.Controllers
                     return NotFound(_response);
                 }
 
-                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var userId = Guid.Parse(User.FindFirst("ident")?.Value);
                 if (existingCollection.CreatedBy != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Forbidden;
@@ -212,23 +213,21 @@ namespace RecipeService.Controllers
                     return StatusCode(StatusCodes.Status403Forbidden, _response);
                 }
 
-                var collection = _mapper.Map<Collection>(updateDTO);
-                collection.CreatedBy = existingCollection.CreatedBy;
-                collection.CreatedAt = existingCollection.CreatedAt;
+                _mapper.Map(updateDTO, existingCollection);
 
-                if (updateDTO.RecipeIds.Any())
+                // Update recipes
+                var newRecipeIds = new HashSet<Guid>(updateDTO.RecipeIds);
+                existingCollection.Recipes.RemoveAll(r => !newRecipeIds.Contains(r.Id));
+
+                var existingRecipeIds = existingCollection.Recipes.Select(r => r.Id).ToHashSet();
+                foreach (var recipe in recipes.Where(r => !existingRecipeIds.Contains(r.Id)))
                 {
-                    var recipes = await _dbRecipe.GetAllAsync(r => updateDTO.RecipeIds.Contains(r.Id));
-                    collection.Recipes = recipes;
-                }
-                else
-                {
-                    collection.Recipes = new List<Recipe>();
+                    existingCollection.Recipes.Add(recipe);
                 }
 
-                UpdateNutritionalValues(collection);
+                UpdateNutritionalValues(existingCollection);
 
-                await _dbCollection.UpdateAsync(collection);
+                await _dbCollection.UpdateAsync(existingCollection);
 
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
@@ -266,7 +265,7 @@ namespace RecipeService.Controllers
                     return NotFound(_response);
                 }
 
-                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var userId = Guid.Parse(User.FindFirst("ident")?.Value);
                 if (collection.CreatedBy != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Forbidden;
@@ -296,6 +295,44 @@ namespace RecipeService.Controllers
             return Ok(collections);
         }
 
+        [HttpPost("{collectionId}/recipes")]
+        public async Task<ActionResult<Collection>> AddRecipeToCollection(Guid collectionId, [FromBody] AddRecipeRequest request)
+        {
+            if (request.RecipeId == Guid.Empty)
+            {
+                return BadRequest(new { ErrorsMessages = new[] { "RecipeId is required" } });
+            }
+
+            var collection = await _dbCollection.AddRecipeToCollection(collectionId, request.RecipeId);
+            if (collection == null)
+            {
+                return NotFound(new { ErrorsMessages = new[] { "Collection or Recipe not found" } });
+            }
+            UpdateNutritionalValues(collection);
+            await _dbCollection.SaveAsync();
+
+            return Ok(collection);
+        }
+
+        [HttpDelete("{collectionId}/recipes/{recipeId}")]
+        public async Task<ActionResult<Collection>> RemoveRecipeFromCollection(Guid collectionId, Guid recipeId)
+        {
+            if ((collectionId == Guid.Empty) || (recipeId == Guid.Empty))
+            {
+                return BadRequest(new { ErrorsMessages = new[] { "CollectionId and RecipeId are required" } });
+            }
+
+            var collection = await _dbCollection.RemoveRecipeFromCollectionAsync(collectionId, recipeId);
+            if (collection == null)
+            {
+                return NotFound(new { ErrorsMessages = new[] { "Collection or Recipe not found" } });
+            }
+            UpdateNutritionalValues(collection);
+            await _dbCollection.SaveAsync();
+
+            return Ok(collection);
+        }
+
         private void UpdateNutritionalValues(Collection collection)
         {
             collection.TotalCalories = collection.Recipes.Sum(r => r.Calories);
@@ -303,5 +340,9 @@ namespace RecipeService.Controllers
             collection.TotalFat = collection.Recipes.Sum(r => r.Fat);
             collection.TotalCarbohydrates = collection.Recipes.Sum(r => r.Carbohydrates);
         }
+    }
+    public class AddRecipeRequest
+    {
+        public Guid RecipeId { get; set; }
     }
 }

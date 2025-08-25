@@ -1,4 +1,4 @@
-import { Component, OnInit, Output, EventEmitter, Input } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { FormBuilder, FormGroup, FormArray, Validators } from '@angular/forms';
 import { RecipeService } from '../../../core/services/recipe.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -12,15 +12,19 @@ import { CategoryService } from '../../../core/services/category.service';
   templateUrl: './recipe-form.component.html',
   styleUrls: ['./recipe-form.component.css']
 })
-export class RecipeFormComponent implements OnInit {
+export class RecipeFormComponent implements OnInit, OnChanges {
   @Input() category: Category | null = null;
+  @Input() recipeToEdit: Recipe | null = null;
+  
   @Output() recipeCreated = new EventEmitter<Recipe>();
+  @Output() recipeUpdated = new EventEmitter<Recipe>();
   @Output() formClosed = new EventEmitter<void>();
 
   categories: Category[] | null = null;
   recipeForm: FormGroup;
   isSubmitting = false;
   showForm = false;
+  isEditMode = false;
   
   // File upload properties
   selectedFile: File | null = null;
@@ -37,30 +41,49 @@ export class RecipeFormComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router
   ) {
-    const navigation = this.router.getCurrentNavigation();
-    this.category = navigation?.extras?.state?.['category'];
-    if(!this.category){
-      this.categoryService.getSubCategoriesWithRecipes().subscribe((response: Category[])=>{
-        this.categories = response;
-      });
-    }
     this.recipeForm = this.createForm();
+    // Always fetch categories to populate dropdown
+    this.categoryService.getSubCategoriesWithRecipes().subscribe((response: Category[]) => {
+      this.categories = response;
+      // Set categoryId if provided via Input
+      if (this.category?.id) {
+        this.recipeForm.patchValue({ categoryId: this.category.id });
+      }
+    });
   }
 
   ngOnInit(): void {
     // Component initialization
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['recipeToEdit'] && this.recipeToEdit) {
+      this.isEditMode = true;
+      this.showForm = true;
+      this.populateForm(this.recipeToEdit);
+    }
+    if (changes['category'] && this.category?.id) {
+      this.recipeForm.patchValue({ categoryId: this.category.id });
+    }
+  }
+
+  getCategoryDisplayName(): string {
+    if (this.recipeForm.value.categoryId && this.categories) {
+      const foundCategory = this.categories.find(c => c.id === this.recipeForm.value.categoryId);
+      return foundCategory?.name || 'Не вибрано';
+    }
+    return 'Не вибрано';
+  }
+
   createForm(): FormGroup {
     return this.fb.group({
       title: ['', [Validators.required, Validators.minLength(3)]],
       description: ['', [Validators.required, Validators.minLength(10)]],
-      categoryId: [this.category?.id || '', Validators.required],
+      categoryId: ['', Validators.required], // Initialize empty to require selection
       cookingTime: [0, [Validators.required, Validators.min(1)]],
       servings: [1, [Validators.required, Validators.min(1)]],
       difficulty: ['Easy', Validators.required],
       cuisine: ['', [Validators.required, Validators.minLength(3)]],
-
       
       // Nutritional Information
       calories: [0, [Validators.min(0)]],
@@ -70,7 +93,6 @@ export class RecipeFormComponent implements OnInit {
       
       // Characteristics as FormArrays
       allergens: this.fb.array([this.createCharacteristicGroup()]),
-      // cuisines: this.fb.array([this.createCharacteristicGroup()]),
       diets: this.fb.array([this.createCharacteristicGroup()]),
       tags: this.fb.array([this.createCharacteristicGroup()]),
       
@@ -99,6 +121,90 @@ export class RecipeFormComponent implements OnInit {
       step: ['', Validators.required],
       order: [1, Validators.required]
     });
+  }
+
+  // Populate form with recipe data for editing
+  private populateForm(recipe: Recipe): void {
+    this.recipeForm.patchValue({
+      title: recipe.title,
+      description: recipe.description,
+      categoryId: recipe.categoryId,
+      cookingTime: recipe.cookingTime,
+      servings: recipe.serving,
+      difficulty: recipe.difficulty,
+      cuisine: recipe.cuisine,
+      calories: recipe.calories,
+      protein: recipe.protein,
+      carbohydrates: recipe.carbohydrates,
+      fat: recipe.fat
+    });
+
+    // Set image preview
+    if (recipe.imageUrl) {
+      this.filePreviewUrl = recipe.imageUrl;
+    }
+
+    // Populate allergens
+    this.populateFormArray(this.allergens, recipe.allergens || []);
+
+    // Populate diets
+    this.populateFormArray(this.diets, recipe.diets || []);
+
+    // Populate tags
+    this.populateFormArray(this.tags, recipe.tags || []);
+
+    // Populate ingredients
+    this.ingredients.clear();
+    recipe.ingredients?.forEach(ing => {
+      const parsed = this.parseIngredient(ing);
+      this.ingredients.push(this.fb.group({
+        name: [parsed.name, Validators.required],
+        amount: [parsed.amount, Validators.required],
+        unit: [parsed.unit, Validators.required]
+      }));
+    });
+    if (this.ingredients.length === 0) {
+      this.ingredients.push(this.createIngredientGroup());
+    }
+
+    // Populate instructions
+    this.instructions.clear();
+    recipe.directions?.forEach((step, index) => {
+      this.instructions.push(this.fb.group({
+        step: [step, Validators.required],
+        order: [index + 1, Validators.required]
+      }));
+    });
+    if (this.instructions.length === 0) {
+      this.instructions.push(this.createInstructionGroup());
+    }
+  }
+
+  private populateFormArray(formArray: FormArray, items: string[]): void {
+    formArray.clear();
+    items.forEach(item => {
+      formArray.push(this.fb.group({ name: [item] }));
+    });
+    if (formArray.length === 0) {
+      formArray.push(this.createCharacteristicGroup());
+    }
+  }
+
+  private parseIngredient(ingredient: string): { amount: string, unit: string, name: string } {
+    const match = ingredient.match(/^(\d+(?:\.\d+)?)\s*([^\d\s]+)\s*(.+)$/);
+    if (match) {
+      return {
+        amount: match[1],
+        unit: match[2],
+        name: match[3].trim()
+      };
+    }
+    // Fallback: treat whole string as name
+    return {
+      amount: '',
+      unit: '',
+      name: ingredient.trim()
+    };
   }
 
   // File upload methods
@@ -148,7 +254,6 @@ export class RecipeFormComponent implements OnInit {
   }
 
   private validateFile(file: File): { isValid: boolean; error?: string } {
-    // Check file type
     if (!this.allowedTypes.includes(file.type)) {
       return {
         isValid: false,
@@ -156,7 +261,6 @@ export class RecipeFormComponent implements OnInit {
       };
     }
 
-    // Check file size
     if (file.size > this.maxFileSize) {
       return {
         isValid: false,
@@ -180,7 +284,6 @@ export class RecipeFormComponent implements OnInit {
     this.filePreviewUrl = null;
     this.fileError = '';
     
-    // Reset file input
     const fileInput = document.getElementById('recipeImage') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
@@ -210,10 +313,6 @@ export class RecipeFormComponent implements OnInit {
     return this.recipeForm.get('allergens') as FormArray;
   }
 
-  get cuisines(): FormArray {
-    return this.recipeForm.get('cuisines') as FormArray;
-  }
-
   get diets(): FormArray {
     return this.recipeForm.get('diets') as FormArray;
   }
@@ -222,7 +321,7 @@ export class RecipeFormComponent implements OnInit {
     return this.recipeForm.get('tags') as FormArray;
   }
 
-  // Add/Remove methods for characteristics
+  // Add/Remove methods
   addAllergen(): void {
     this.allergens.push(this.createCharacteristicGroup());
   }
@@ -230,16 +329,6 @@ export class RecipeFormComponent implements OnInit {
   removeAllergen(index: number): void {
     if (this.allergens.length > 1) {
       this.allergens.removeAt(index);
-    }
-  }
-
-  addCuisine(): void {
-    this.cuisines.push(this.createCharacteristicGroup());
-  }
-
-  removeCuisine(index: number): void {
-    if (this.cuisines.length > 1) {
-      this.cuisines.removeAt(index);
     }
   }
 
@@ -263,7 +352,6 @@ export class RecipeFormComponent implements OnInit {
     }
   }
 
-  // Ingredients methods
   addIngredient(): void {
     this.ingredients.push(this.createIngredientGroup());
   }
@@ -274,7 +362,6 @@ export class RecipeFormComponent implements OnInit {
     }
   }
 
-  // Instructions methods
   addInstruction(): void {
     const newOrder = this.instructions.length + 1;
     const instructionGroup = this.createInstructionGroup();
@@ -298,6 +385,10 @@ export class RecipeFormComponent implements OnInit {
       return;
     }
     this.showForm = true;
+    // Set categoryId if provided via Input
+    this.recipeForm.patchValue({
+      categoryId: this.category?.id || ''
+    });
   }
 
   hideCreateForm(): void {
@@ -308,29 +399,6 @@ export class RecipeFormComponent implements OnInit {
 
   // Form submission
   onSubmit(): void {
-
-    // const formData = this.prepareFormData();
-      
-    //   console.log('=== FormData content ===');
-    //   formData.forEach((value, key) => {
-    //     console.log(`${key}:`, value);
-    //   });
-
-
-    //   this.recipeService.createRecipe(formData).subscribe({
-    //     next: (recipe) => {
-    //       this.recipeCreated.emit(recipe);
-    //       this.hideCreateForm();
-    //       alert('Рецепт успішно створено!');
-    //     },
-    //     error: (error) => {
-    //       console.error('Error creating recipe:', error);
-    //       alert('Помилка при створенні рецепту. Спробуйте ще раз.');
-    //     },
-    //     complete: () => {
-    //       // this.isSubmitting = false;
-    //     }
-    //   });
     if (this.recipeForm.valid && !this.isSubmitting) {
       this.isSubmitting = true;
       
@@ -341,92 +409,102 @@ export class RecipeFormComponent implements OnInit {
         console.log(`${key}:`, value);
       });
 
-
-      this.recipeService.createRecipe(formData).subscribe({
-        next: (recipe) => {
-          this.recipeCreated.emit(recipe);
-          this.hideCreateForm();
-          alert('Рецепт успішно створено!');
-        },
-        error: (error) => {
-          console.error('Error creating recipe:', error);
-          alert('Помилка при створенні рецепту. Спробуйте ще раз.');
-        },
-        complete: () => {
-          this.isSubmitting = false;
-        }
-      });
+      if (this.isEditMode && this.recipeToEdit?.id) {
+        this.recipeService.updateRecipe(this.recipeToEdit.id, formData).subscribe({
+          next: (updatedRecipe) => {
+            this.recipeUpdated.emit(updatedRecipe);
+            this.hideCreateForm();
+            alert('Рецепт успішно оновлено!');
+          },
+          error: (error) => {
+            console.error('Error updating recipe:', error);
+            alert('Помилка при оновленні рецепту. Спробуйте ще раз.');
+          },
+          complete: () => {
+            this.isSubmitting = false;
+          }
+        });
+      } else {
+        this.recipeService.createRecipe(formData).subscribe({
+          next: (newRecipe) => {
+            this.recipeCreated.emit(newRecipe);
+            this.hideCreateForm();
+            alert('Рецепт успішно створено!');
+          },
+          error: (error) => {
+            console.error('Error creating recipe:', error);
+            alert('Помилка при створенні рецепту. Спробуйте ще раз.');
+          },
+          complete: () => {
+            this.isSubmitting = false;
+          }
+        });
+      }
     }
   }
 
-  // Додайте цей метод до вашого RecipeFormComponent
-private prepareFormData(): FormData {
-  const formData = new FormData();
-  const formValue = this.recipeForm.value;
+  private prepareFormData(): FormData {
+    const formData = new FormData();
+    const formValue = this.recipeForm.value;
 
-  // Додаємо прості поля
-  formData.append('title', formValue.title || '');
-  formData.append('description', formValue.description || '');
-  formData.append('categoryId', formValue.categoryId || '');
-  formData.append('cookingTime', formValue.cookingTime?.toString() || '0');
-  formData.append('difficulty', formValue.difficulty || 'Easy');
-  formData.append('serving', formValue.servings?.toString() || '1');
-  formData.append('calories', formValue.calories?.toString() || '0');
-  formData.append('protein', formValue.protein?.toString() || '0');
-  formData.append('fat', formValue.fat?.toString() || '0');
-  formData.append('carbohydrates', formValue.carbohydrates?.toString() || '0');
-  formData.append('cuisine', formValue.cuisine || '');
-  
-  // Інгредієнти - формуємо як рядки "кількість одиниця назва"
-  const ingredientsList = formValue.ingredients
-    .filter((ing: any) => ing.name && ing.name.trim())
-    .map((ing: any) => `${ing.amount} ${ing.unit} ${ing.name}`.trim());
-  
-  ingredientsList.forEach((ingredient: string, index: number) => {
-    formData.append(`ingredients[${index}]`, ingredient);
-  });
-
-  // Інструкції
-  const directionsList = formValue.instructions
-    .filter((inst: any) => inst.step && inst.step.trim())
-    .map((inst: any) => inst.step.trim());
+    if (this.recipeToEdit) {
+      formData.append('Id', this.recipeToEdit.id);
+    }
+    formData.append('title', formValue.title || '');
+    formData.append('description', formValue.description || '');
+    formData.append('categoryId', formValue.categoryId || '');
+    formData.append('cookingTime', formValue.cookingTime?.toString() || '0');
+    formData.append('difficulty', formValue.difficulty || 'Easy');
+    formData.append('serving', formValue.servings?.toString() || '1');
+    formData.append('calories', formValue.calories?.toString() || '0');
+    formData.append('protein', formValue.protein?.toString() || '0');
+    formData.append('fat', formValue.fat?.toString() || '0');
+    formData.append('carbohydrates', formValue.carbohydrates?.toString() || '0');
+    formData.append('cuisine', formValue.cuisine || '');
     
-  directionsList.forEach((direction: string, index: number) => {
-    formData.append(`directions[${index}]`, direction);
-  });
+    // Ingredients
+    const ingredientsList = formValue.ingredients
+      .filter((ing: any) => ing.name && ing.name.trim())
+      .map((ing: any) => `${ing.amount} ${ing.unit} ${ing.name}`.trim());
+    
+    ingredientsList.forEach((ingredient: string, index: number) => {
+      formData.append(`ingredients[${index}]`, ingredient);
+    });
 
-  // Алергени
-  const allergensList = this.extractCharacteristicNames(formValue.allergens);
-  allergensList.forEach((allergen: string, index: number) => {
-    formData.append(`allergens[${index}]`, allergen);
-  });
+    // Directions
+    const directionsList = formValue.instructions
+      .filter((inst: any) => inst.step && inst.step.trim())
+      .map((inst: any) => inst.step.trim());
+      
+    directionsList.forEach((direction: string, index: number) => {
+      formData.append(`directions[${index}]`, direction);
+    });
 
-  // Дієти
-  const dietsList = this.extractCharacteristicNames(formValue.diets);
-  dietsList.forEach((diet: string, index: number) => {
-    formData.append(`diets[${index}]`, diet);
-  });
+    // Allergens
+    const allergensList = this.extractCharacteristicNames(formValue.allergens);
+    allergensList.forEach((allergen: string, index: number) => {
+      formData.append(`allergens[${index}]`, allergen);
+    });
 
-  // Теги
-  const tagsList = this.extractCharacteristicNames(formValue.tags);
-  tagsList.forEach((tag: string, index: number) => {
-    formData.append(`tags[${index}]`, tag);
-  });
+    // Diets
+    const dietsList = this.extractCharacteristicNames(formValue.diets);
+    dietsList.forEach((diet: string, index: number) => {
+      formData.append(`diets[${index}]`, diet);
+    });
 
-  // Кухня (якщо у вас є масив кухонь)
-  // const cuisinesList = this.extractCharacteristicNames(formValue.cuisines);
-  // if (cuisinesList.length > 0) {
-  //   formData.append('cuisine', cuisinesList[0]); // Беремо першу кухню
-  // }
+    // Tags
+    const tagsList = this.extractCharacteristicNames(formValue.tags);
+    tagsList.forEach((tag: string, index: number) => {
+      formData.append(`tags[${index}]`, tag);
+    });
 
-  // Файл зображення
-  if (this.selectedFile) {
-    formData.append('image', this.selectedFile, this.selectedFile.name);
+    // Image file if changed
+    if (this.selectedFile) {
+      formData.append('image', this.selectedFile, this.selectedFile.name);
+    }
+
+    return formData;
   }
-
-  return formData;
-}
-
 
   extractCharacteristicNames(characteristics: any[]): string[] {
     return characteristics
@@ -437,18 +515,14 @@ private prepareFormData(): FormData {
   resetForm(): void {
     this.recipeForm.reset();
     
-    // Reset file upload
     this.removeFile();
     
-    // Reset all arrays to have one empty item
     this.resetFormArray(this.ingredients, this.createIngredientGroup);
     this.resetFormArray(this.instructions, this.createInstructionGroup);
     this.resetFormArray(this.allergens, this.createCharacteristicGroup);
-    this.resetFormArray(this.cuisines, this.createCharacteristicGroup);
     this.resetFormArray(this.diets, this.createCharacteristicGroup);
     this.resetFormArray(this.tags, this.createCharacteristicGroup);
     
-    // Set default values
     this.instructions.at(0).patchValue({ order: 1 });
     this.recipeForm.patchValue({
       categoryId: this.category?.id || '',
@@ -464,7 +538,6 @@ private prepareFormData(): FormData {
     formArray.push(createGroupFn.call(this));
   }
 
-  // Helper methods
   isFieldInvalid(fieldName: string): boolean {
     const field = this.recipeForm.get(fieldName);
     return !!(field && field.invalid && (field.dirty || field.touched));
@@ -473,8 +546,8 @@ private prepareFormData(): FormData {
   getFieldError(fieldName: string): string {
     const field = this.recipeForm.get(fieldName);
     if (field?.errors) {
-      if (field.errors['required']) return `${fieldName} є обов'язковим`;
-      if (field.errors['minlength']) return `Мінімальна довжина: ${field.errors['minlength'].requiredLength}`;
+      if (field.errors['required']) return 'Це поле є обов’язковим';
+      if (field.errors['minlength']) return `Мінімальна довжина: ${field.errors['minlength'].requiredLength} символів`;
       if (field.errors['min']) return `Мінімальне значення: ${field.errors['min'].min}`;
     }
     return '';

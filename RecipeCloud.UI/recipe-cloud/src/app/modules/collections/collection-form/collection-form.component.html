@@ -1,4 +1,4 @@
-<!-- Create Collection Button -->
+<!-- 
 <div class="create-collection-section" *ngIf="isAuthenticated">
   <button 
     type="button" 
@@ -10,17 +10,154 @@
   </button>
 </div>
 
-<!-- Create Collection Form Modal -->
-<div class="collection-form-overlay" *ngIf="showForm" (click)="hideCreateForm()">
-  <div class="collection-form-container" (click)="$event.stopPropagation()">
+
+<div 
+  class="collection-form-overlay" 
+  *ngIf="showForm" 
+  (click)="onOverlayClick()"
+  [class.submitting]="isSubmitting"
+  [attr.aria-hidden]="!showForm"
+>
+  <div 
+    class="collection-form-container" 
+    (click)="$event.stopPropagation()"
+    (keydown.escape)="onEscape()"
+    tabindex="0"
+    [attr.aria-busy]="isSubmitting"
+  >
     <div class="collection-form-header">
       <h2>Створити нову колекцію</h2>
-      <button type="button" class="btn-close" (click)="hideCreateForm()">
+      <button 
+        type="button" 
+        class="btn-close" 
+        (click)="onCloseClicked()"
+        [disabled]="isSubmitting"
+        [attr.aria-disabled]="isSubmitting"
+      >
         <i class="fas fa-times"></i>
       </button>
     </div>
 
-    <form [formGroup]="collectionForm" (ngSubmit)="onSubmit()" class="collection-form">
+    <form [formGroup]="collectionForm" (ngSubmit)="onSubmit()" class="collection-form" novalidate>
+
+      <div class="form-section">
+        <h3>Основна інформація</h3>
+        
+        <div class="form-group">
+          <label for="title">Назва колекції *</label>
+          <input 
+            type="text" 
+            id="title" 
+            formControlName="title" 
+            class="form-control"
+            [class.is-invalid]="isFieldInvalid('title')"
+            placeholder="Введіть назву колекції"
+            [readonly]="isSubmitting"
+          >
+          <div class="invalid-feedback" *ngIf="isFieldInvalid('title')">
+            {{ getFieldError('title') }}
+          </div>
+        </div>
+      </div>
+
+
+      <div class="form-section">
+        <h3>Рецепти в колекції</h3>
+        
+        <div formArrayName="recipes">
+          <div 
+            *ngFor="let recipe of recipes.controls; let i = index; trackBy: trackByIndex" 
+            [formGroupName]="i" 
+            class="recipe-row"
+          >
+            <div class="form-row">
+              <div class="form-group">
+                <select 
+                  formControlName="recipeId" 
+                  class="form-control"
+                  [class.is-invalid]="isFieldInvalid('recipes.' + i + '.recipeId')"
+                  [disabled]="isSubmitting"
+                >
+                  <option value="">-- Оберіть рецепт --</option>
+                  <option *ngFor="let r of availableRecipes; trackBy: trackByRecipeId" [value]="r.id">
+                    {{ r.title }}
+                  </option>
+                </select>
+                <div class="invalid-feedback" *ngIf="isFieldInvalid('recipes.' + i + '.recipeId')">
+                  {{ getFieldError('recipes.' + i + '.recipeId') }}
+                </div>
+              </div>
+              <button 
+                type="button" 
+                class="btn btn-remove"
+                (click)="removeRecipe(i)"
+                [disabled]="recipes.length === 1 || isSubmitting"
+              >
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <button type="button" class="btn btn-add" (click)="addRecipe()" [disabled]="isSubmitting">
+          <i class="fas fa-plus"></i>
+          Додати рецепт
+        </button>
+      </div>
+
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-cancel" (click)="onCloseClicked()" [disabled]="isSubmitting">
+          Скасувати
+        </button>
+        <button 
+          type="submit" 
+          class="btn btn-submit"
+          [disabled]="collectionForm.invalid || isSubmitting"
+        >
+          <span *ngIf="isSubmitting">
+            <i class="fas fa-spinner fa-spin"></i>
+            Створення...
+          </span>
+          <span *ngIf="!isSubmitting">
+            Створити колекцію
+          </span>
+        </button>
+      </div>
+    </form>
+  </div>
+</div> -->
+<!-- CollectionFormComponent template (remove the create button section) -->
+
+<!-- Create/Update Collection Form Modal -->
+<div 
+  class="collection-form-overlay" 
+  *ngIf="showForm" 
+  (click)="onOverlayClick()"
+  [class.submitting]="isSubmitting"
+  [attr.aria-hidden]="!showForm"
+>
+  <div 
+    class="collection-form-container" 
+    (click)="$event.stopPropagation()"
+    (keydown.escape)="onEscape()"
+    tabindex="0"
+    [attr.aria-busy]="isSubmitting"
+  >
+    <div class="collection-form-header">
+      <h2>{{ isEditMode ? 'Редагувати колекцію' : 'Створити нову колекцію' }}</h2>
+      <button 
+        type="button" 
+        class="btn-close" 
+        (click)="onCloseClicked()"
+        [disabled]="isSubmitting"
+        [attr.aria-disabled]="isSubmitting"
+      >
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+
+    <form [formGroup]="collectionForm" (ngSubmit)="onSubmit()" class="collection-form" novalidate>
       <!-- Basic Information -->
       <div class="form-section">
         <h3>Основна інформація</h3>
@@ -33,26 +170,13 @@
             formControlName="title" 
             class="form-control"
             [class.is-invalid]="isFieldInvalid('title')"
-            placeholder="Введіть назву колекції">
+            placeholder="Введіть назву колекції"
+            [readonly]="isSubmitting"
+          >
           <div class="invalid-feedback" *ngIf="isFieldInvalid('title')">
             {{ getFieldError('title') }}
           </div>
         </div>
-
-        <!-- <div class="form-group">
-          <label for="description">Опис *</label>
-          <textarea 
-            id="description" 
-            formControlName="description" 
-            class="form-control"
-            [class.is-invalid]="isFieldInvalid('description')"
-            rows="3"
-            placeholder="Опишіть вашу колекцію..."></textarea>
-          <div class="invalid-feedback" *ngIf="isFieldInvalid('description')">
-            {{ getFieldError('description') }}
-          </div>
-        </div> -->
-
       </div>
 
       <!-- Recipes Selection -->
@@ -60,18 +184,22 @@
         <h3>Рецепти в колекції</h3>
         
         <div formArrayName="recipes">
-          <div *ngFor="let recipe of recipes.controls; let i = index" 
-               [formGroupName]="i" 
-               class="recipe-row">
+          <div 
+            *ngFor="let recipe of recipes.controls; let i = index; trackBy: trackByIndex" 
+            [formGroupName]="i" 
+            class="recipe-row"
+          >
             <div class="form-row">
               <div class="form-group">
                 <select 
                   formControlName="recipeId" 
                   class="form-control"
-                  [class.is-invalid]="isFieldInvalid('recipes.' + i + '.recipeId')">
+                  [class.is-invalid]="isFieldInvalid('recipes.' + i + '.recipeId')"
+                  [disabled]="isSubmitting"
+                >
                   <option value="">-- Оберіть рецепт --</option>
-                  <option *ngFor="let recipe of availableRecipes" [value]="recipe.id">
-                    {{ recipe.title }}
+                  <option *ngFor="let r of availableRecipes; trackBy: trackByRecipeId" [value]="r.id">
+                    {{ r.title }}
                   </option>
                 </select>
                 <div class="invalid-feedback" *ngIf="isFieldInvalid('recipes.' + i + '.recipeId')">
@@ -82,14 +210,15 @@
                 type="button" 
                 class="btn btn-remove"
                 (click)="removeRecipe(i)"
-                [disabled]="recipes.length === 1">
+                [disabled]="recipes.length === 1 || isSubmitting"
+              >
                 <i class="fas fa-trash"></i>
               </button>
             </div>
           </div>
         </div>
         
-        <button type="button" class="btn btn-add" (click)="addRecipe()">
+        <button type="button" class="btn btn-add" (click)="addRecipe()" [disabled]="isSubmitting">
           <i class="fas fa-plus"></i>
           Додати рецепт
         </button>
@@ -97,19 +226,20 @@
 
       <!-- Form Actions -->
       <div class="form-actions">
-        <button type="button" class="btn btn-cancel" (click)="hideCreateForm()">
+        <button type="button" class="btn btn-cancel" (click)="onCloseClicked()" [disabled]="isSubmitting">
           Скасувати
         </button>
         <button 
           type="submit" 
           class="btn btn-submit"
-          [disabled]="collectionForm.invalid || isSubmitting">
+          [disabled]="collectionForm.invalid || isSubmitting"
+        >
           <span *ngIf="isSubmitting">
             <i class="fas fa-spinner fa-spin"></i>
-            Створення...
+            {{ isEditMode ? 'Оновлення...' : 'Створення...' }}
           </span>
           <span *ngIf="!isSubmitting">
-            Створити колекцію
+            {{ isEditMode ? 'Оновити колекцію' : 'Створити колекцію' }}
           </span>
         </button>
       </div>

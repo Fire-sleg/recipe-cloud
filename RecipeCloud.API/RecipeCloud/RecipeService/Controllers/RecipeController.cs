@@ -132,18 +132,6 @@ namespace RecipeService.Controllers
             var recipes = _mapper.Map<List<RecipeDTO>>(list);
             return Ok(recipes);
         }
-        [HttpPost("test")]
-        public async Task<ActionResult<APIResponse>> TestAsync()
-        {
-            var emptyStream = new MemoryStream();
-            IFormFile emptyFile = new FormFile(emptyStream, 0, 0, "file", "empty.jpg")
-            {
-                Headers = new HeaderDictionary(),
-                ContentType = "image/jpeg"
-            };
-            var imageUrl = await _minIOService.UploadImageAsync(emptyFile);
-            return Ok(imageUrl);
-        }
 
         [HttpPost]
         //[Authorize]
@@ -244,7 +232,7 @@ namespace RecipeService.Controllers
                     return NotFound(_response);
                 }
 
-                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var userId = Guid.Parse(User.FindFirst("ident")?.Value);
                 if (recipe.CreatedBy != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Forbidden;
@@ -299,7 +287,7 @@ namespace RecipeService.Controllers
                     return BadRequest(_response);
                 }
 
-                var existingRecipe = await _dbRecipe.GetAsync(u => u.Id == id);
+                var existingRecipe = await _dbRecipe.GetAsync(u => u.Id == id, isTracked: true);
                 if (existingRecipe == null)
                 {
                     _response.StatusCode = HttpStatusCode.NotFound;
@@ -307,7 +295,7 @@ namespace RecipeService.Controllers
                     return NotFound(_response);
                 }
 
-                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var userId = Guid.Parse(User.FindFirst("ident")?.Value);
                 if (existingRecipe.CreatedBy != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Forbidden;
@@ -315,6 +303,16 @@ namespace RecipeService.Controllers
                     _response.ErrorsMessages.Add("You are not authorized to update this recipe");
                     return StatusCode(StatusCodes.Status403Forbidden, _response);
                 }
+
+                //if (image != null && image.Length > 0)
+                //{
+                //    if (!string.IsNullOrEmpty(existingRecipe.ImageUrl))
+                //    {
+                //        var oldFileName = Path.GetFileName(existingRecipe.ImageUrl);
+                //        await _minIOService.DeleteImageAsync(oldFileName);
+                //    }
+                //    updateDTO.ImageUrl = await _minIOService.UploadImageAsync(image);
+                //}
 
                 if (image != null && image.Length > 0)
                 {
@@ -325,12 +323,28 @@ namespace RecipeService.Controllers
                     }
                     updateDTO.ImageUrl = await _minIOService.UploadImageAsync(image);
                 }
+                else
+                {
+                    // Preserve existing ImageUrl if no new image is provided
+                    updateDTO.ImageUrl = existingRecipe.ImageUrl;
+                }
 
-                var recipe = _mapper.Map<Recipe>(updateDTO);
-                recipe.CreatedBy = existingRecipe.CreatedBy;
-                recipe.CreatedAt = existingRecipe.CreatedAt;
+                if (updateDTO.Title != existingRecipe.Title)
+                {
+                    updateDTO.TransliteratedName = Transliterator.Transliterate(updateDTO.Title);
+                }
+                else
+                {
+                    updateDTO.TransliteratedName = existingRecipe.TransliteratedName;
+                }
 
-                await _dbRecipe.UpdateAsync(recipe);
+                //var recipe = _mapper.Map<Recipe>(updateDTO);
+                //recipe.CreatedBy = existingRecipe.CreatedBy;
+                //recipe.CreatedAt = existingRecipe.CreatedAt;
+                _mapper.Map(updateDTO, existingRecipe);
+
+
+                await _dbRecipe.UpdateAsync(existingRecipe); // recipe
 
                 _response.StatusCode = HttpStatusCode.NoContent;
                 _response.IsSuccess = true;
@@ -370,7 +384,7 @@ namespace RecipeService.Controllers
                     return NotFound(_response);
                 }
 
-                var userId = Guid.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                var userId = Guid.Parse(User.FindFirst("ident")?.Value);
                 if (recipe.CreatedBy != userId)
                 {
                     _response.StatusCode = HttpStatusCode.Forbidden;

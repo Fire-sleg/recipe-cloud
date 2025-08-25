@@ -1,55 +1,149 @@
 <div class="collections-container">
-        <div class="base-container">
-            <div class="collections-section">
-                <div class="section-header">
-                    <h2 class="section-title">
-                        <span class="section-icon">📚</span>
-                        Мої колекції рецептів
-                    </h2>
-                    <p class="section-description">Організуйте улюблені рецепти у тематичні колекції</p>
-                </div>
+  <div class="base-container">
+    <div class="collections-section">
+      <div class="section-header">
+        <h2 class="section-title">
+          <span class="section-icon">📚</span>
+          Мої колекції рецептів
+        </h2>
+        <p class="section-description">Організуйте улюблені рецепти у тематичні колекції</p>
+        <button 
+          type="button" 
+          class="btn btn-create-collection" 
+          (click)="createNewCollection()">
+          <i class="fas fa-plus"></i>
+          Створити колекцію
+        </button>
+      </div>
 
-                <!-- Collections with content -->
-                <div class="collections-grid" *ngFor="let collection of collections">
-                    <div class="collection-card">
-                        <div class="collection-header">
-                            <h3 class="collection-name">{{collection.title}}</h3>
-                            <div class="collection-meta">
-                                <span class="recipe-count">📝 {{collection.recipes.length}} рецептів</span>
-                                <div class="collection-actions">
-                                    <button class="action-btn small edit" title="Редагувати">✏️</button>
-                                    <button class="action-btn small delete" title="Видалити">🗑️</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="collection-recipes" *ngFor="let recipe of collection.recipes">
-                            <div class="collection-recipe">
-                                <div class="recipe-thumb">🍝</div>
-                                <div class="recipe-details">
-                                    <h4 class="recipe-title">{{recipe.title}}</h4>
-                                    <p class="recipe-time">⏱️ {{recipe.cookingTime}} хв</p>
-                                </div>
-                                <button class="remove-recipe-btn" title="Видалити з колекції">❌</button>
-                            </div>
-                        </div>
-
-                        <div class="collection-footer">
-                            <button class="add-recipe-btn"><span class="plus-icon">+</span> Додати рецепт</button>
-                        </div>
-                    </div>
-
-                    
-                </div>
-
-                
+      <div class="collections-grid" *ngIf="collections$ | async as collections; else emptyState">
+        <div class="collection-card" *ngFor="let collection of collections; trackBy: trackByCollectionId">
+          <div class="collection-header">
+            <h3 class="collection-name">{{ collection.title }}</h3>
+            <div class="collection-meta">
+              <span class="recipe-count">📝 {{ collection.recipes.length }} рецептів</span>
+              <div class="collection-actions">
+                <button class="action-btn small edit" (click)="editCollection(collection)" title="Редагувати">✏️</button>
+                <button class="action-btn small delete" (click)="onDeleteCollection(collection.id)" title="Видалити">🗑️</button>
+              </div>
             </div>
-        </div>
-        <!-- Button to create new collection -->
-                <div style="text-align: center; margin-top: 40px;">
-                    <app-collection-form></app-collection-form>
-                    <!-- <button class="create-collection-btn">
-                        <span>➕</span> Створити нову колекцію
-                    </button> -->
+          </div>
+
+          <!-- Загальна інформація про нутрієнти колекції -->
+          <div class="collection-nutrition" *ngIf="collection.recipes.length > 0">
+            <h4 class="nutrition-title">📊 Загальна поживність колекції</h4>
+            <div class="nutrition-grid">
+              <div class="nutrition-item">
+                <span class="nutrition-icon">🔥</span>
+                <span class="nutrition-value">{{ collection.totalCalories }}</span>
+                <span class="nutrition-label">ккал</span>
+              </div>
+              <div class="nutrition-item">
+                <span class="nutrition-icon">🥩</span>
+                <span class="nutrition-value">{{ collection.totalProtein }}г</span>
+                <span class="nutrition-label">білки</span>
+              </div>
+              <div class="nutrition-item">
+                <span class="nutrition-icon">🧈</span>
+                <span class="nutrition-value">{{ collection.totalFat }}г</span>
+                <span class="nutrition-label">жири</span>
+              </div>
+              <div class="nutrition-item">
+                <span class="nutrition-icon">🍞</span>
+                <span class="nutrition-value">{{ collection.totalCarbohydrates }}г</span>
+                <span class="nutrition-label">вуглев.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="collection-recipes">
+            <div class="collection-recipe" *ngFor="let recipe of collection.recipes; trackBy: trackByRecipeId">
+              <div class="recipe-thumb">🍝</div>
+              <div class="recipe-details">
+                <h4 class="recipe-title">{{ recipe.title }}</h4>
+                <div class="recipe-info">
+                  <p class="recipe-time">⏱️ {{ recipe.cookingTime }} хв</p>
+                  <!-- Нутрієнти для кожного рецепта -->
+                  <div class="recipe-nutrition" >
+                    <span class="nutrition-mini">🔥{{ recipe.calories || 0 }}</span>
+                    <span class="nutrition-mini">🥩{{ recipe.protein || 0 }}г</span>
+                    <span class="nutrition-mini">🧈{{ recipe.fat || 0 }}г</span>
+                    <span class="nutrition-mini">🍞{{ recipe.carbohydrates || 0 }}г</span>
+                  </div>
                 </div>
+              </div>
+              <button class="remove-recipe-btn" (click)="removeFromCollection(collection.id, recipe.id!)" title="Видалити з колекції">❌</button>
+            </div>
+          </div>
+
+          <div class="collection-footer">
+            <button class="add-recipe-btn" (click)="openRecipeSelector(collection.id)">
+              ➕ Додати рецепт
+            </button>
+          </div>
+        </div>
+      </div>
+      <ng-template #emptyState>
+        <div class="empty-state">
+          <div class="empty-icon">📚</div>
+          <h3>У вас поки що немає створених колекцій</h3>
+          <p>Організуйте улюблені рецепти у тематичні колекції!</p>
+          <button class="create-collection-btn" (click)="createNewCollection()">
+            <span>➕</span> Створити колекцію
+          </button>
+        </div>
+      </ng-template>
     </div>
+    <app-collection-form
+      [collectionToEdit]="selectedCollection"
+      (collectionCreated)="onCollectionCreated($event)"
+      (collectionUpdated)="onCollectionUpdated($event)"
+      (formClosed)="onFormClosed()">
+    </app-collection-form>
+  </div>
+</div>
+
+<!-- Модальне вікно для пошуку та вибору рецептів -->
+<div class="modal" *ngIf="showAddModal" [class.active]="showAddModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>Додати рецепт до колекції</h3>
+      <button class="close-btn" (click)="closeRecipeSelector()">✖</button>
+    </div>
+    <div class="modal-body">
+      <input
+        type="text"
+        [(ngModel)]="filters.name"
+        (input)="onSearchInput()"
+        placeholder="Введіть назву рецепта..."
+        class="search-input"
+        autofocus
+      />
+      <div class="search-results" *ngIf="filteredRecipes.length > 0">
+        <div
+          class="recipe-result"
+          *ngFor="let recipe of filteredRecipes; trackBy: trackByRecipeId"
+          (click)="addRecipeToCollection(recipe.id!)"
+        >
+          <div class="recipe-thumb">🍽️</div>
+          <div class="recipe-details">
+            <h4>{{ recipe.title }}</h4>
+            <div class="recipe-result-info">
+              <p>⏱️ {{ recipe.cookingTime }} хв</p>
+              <!-- Нутрієнти в результатах пошуку -->
+              <div class="recipe-nutrition" >
+                <span class="nutrition-mini">🔥{{ recipe.calories || 0 }}</span>
+                <span class="nutrition-mini">🥩{{ recipe.protein || 0 }}г</span>
+                <span class="nutrition-mini">🧈{{ recipe.fat || 0 }}г</span>
+                <span class="nutrition-mini">🍞{{ recipe.carbohydrates || 0 }}г</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="no-results" *ngIf="showNotFound && filters.name">
+        <p>Рецептів за запитом "{{ filters.name }}" не знайдено 😔</p>
+      </div>
+    </div>
+  </div>
+</div>

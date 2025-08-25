@@ -39,7 +39,6 @@ export class AuthService {
     return userId;
   }
   logView(recipeId: string): Observable<any> {
-    debugger;
     return this.http.post(`${environment.authApiUrl}/view-history`, {recipeId});
   }
 
@@ -66,7 +65,6 @@ export class AuthService {
     );
   }
   getPreferences(userId: string): Observable<UserPreferences> {
-    debugger;
     console.log(`${environment.authApiUrl}/preferences/${userId}`);
     return this.http.get<UserPreferences>(`${environment.authApiUrl}/preferences/${userId}`);
   }

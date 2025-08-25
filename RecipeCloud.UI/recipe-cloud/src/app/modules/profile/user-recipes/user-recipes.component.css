@@ -358,3 +358,70 @@
   flex-wrap: wrap;
   padding: 20px 0;
 }
+
+
+
+
+.form-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 20px 0;
+}
+
+/* Стилі для кнопки створення рецепту в header */
+.btn {
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  outline: none;
+  font-family: inherit;
+}
+
+.btn-create-recipe {
+  background: linear-gradient(135deg, #dec4aa, #c9b296);
+  color: white;
+  padding: 12px 24px;
+  font-size: 1rem;
+  box-shadow: 0 4px 16px rgba(222, 196, 170, 0.4);
+  margin-top: 16px;
+}
+
+.btn-create-recipe:hover {
+  background: linear-gradient(135deg, #c9b296, #b8a285);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(222, 196, 170, 0.5);
+}
+
+.btn-create-recipe:active {
+  transform: translateY(0);
+  box-shadow: 0 4px 16px rgba(222, 196, 170, 0.4);
+}
+
+.btn-create-recipe i {
+  font-size: 1rem;
+}
+
+/* Адаптивність для кнопки */
+@media (max-width: 768px) {
+  .btn-create-recipe {
+    width: 100%;
+    justify-content: center;
+    margin-top: 20px;
+    padding: 14px 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .btn-create-recipe {
+    padding: 12px 20px;
+    font-size: 0.95rem;
+  }
+}

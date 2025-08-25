@@ -18,6 +18,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 })
 export class RecipeListComponent  implements OnInit  {
   @Input() category: Category | null = null;
+  
 
   //preferences: UserPreferences[] = [];
 
@@ -145,7 +146,6 @@ export class RecipeListComponent  implements OnInit  {
             this.showNotFound = true;
           }
         }, 1000);
-        debugger;
         this.recipes = response.data;
         this.totalCount = response.totalCount;
 

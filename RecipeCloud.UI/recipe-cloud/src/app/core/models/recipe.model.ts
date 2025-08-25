@@ -28,6 +28,7 @@ export interface Recipe {
     isUserCreated: boolean;
     directions: string[];
     breadcrumbPath: BreadcrumbItem[] | null;
+    categoryId: string;
   }
 
 

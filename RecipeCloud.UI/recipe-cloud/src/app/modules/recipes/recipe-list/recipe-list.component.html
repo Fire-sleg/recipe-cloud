@@ -116,8 +116,12 @@
       <div class="main-content">
         <!-- Create Recipe Button -->
         <div class="create-recipe-section" *ngIf="isAuthenticated">
-          <app-recipe-form [category]="category"></app-recipe-form>
-          <!-- <button 
+          <app-recipe-form ></app-recipe-form> 
+          <!-- 
+          
+          [category]="category"
+
+          <button 
             type="button" 
             class="btn btn-create-recipe" 
             (click)="showCreateRecipeForm()"

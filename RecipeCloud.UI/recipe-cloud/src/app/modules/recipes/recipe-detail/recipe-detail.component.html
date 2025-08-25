@@ -1,4 +1,3 @@
-
 <div class="recipe-detail-container" *ngIf="recipe">
   <!-- Header Section -->
   <div class="recipe-header">
@@ -26,17 +25,6 @@
               </div>
             </div>
 
-            <!-- Edit Button -->
-            <!-- <div class="recipe-actions" *ngIf="canEditRecipe()">
-              <button class="btn-edit-recipe" (click)="onEditRecipe()">
-                <span class="edit-icon">✏️</span>
-                  Редагувати рецепт
-              </button>
-              <button class="btn-delete-recipe" (click)="onDeleteRecipe()">
-                <span class="delete-icon">🗑️</span>
-                  Видалити рецепт
-              </button>
-            </div> -->
             <!-- Recipe Actions Section -->
             <div class="recipe-actions" *ngIf="isAuthenticated">
               <!-- Add to Collection Button -->
@@ -83,6 +71,77 @@
                  (error)="onImageError($event)">
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Collection Modal -->
+  <div class="collection-modal-overlay" *ngIf="showCollectionModal" (click)="closeCollectionModal()">
+    <div class="collection-modal-container" (click)="$event.stopPropagation()">
+      <div class="collection-modal-header">
+        <h2>Додати до колекції</h2>
+        <button type="button" class="btn-close" (click)="closeCollectionModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="collection-modal-body">
+        <div *ngIf="collections && collections.length > 0; else noCollections">
+          <h3>Оберіть колекцію</h3>
+          <div class="collection-list">
+            <div class="collection-item" *ngFor="let collection of collections">
+              <input 
+                type="radio" 
+                [id]="'collection-' + collection.id" 
+                [value]="collection.id" 
+                [(ngModel)]="selectedCollectionId"
+                title="collection">
+              <label [for]="'collection-' + collection.id" class="collection-label">
+                {{ collection.title }}
+              </label>
+            </div>
+          </div>
+          <div class="new-collection-section">
+            <h3>Або створіть нову колекцію</h3>
+            <div class="form-group">
+              <input 
+                type="text" 
+                [(ngModel)]="newCollectionName" 
+                class="form-control"
+                placeholder="Назва нової колекції"
+                (input)="onNewCollectionNameChange()">
+              <div class="invalid-feedback" *ngIf="newCollectionError">
+                {{ newCollectionError }}
+              </div>
+            </div>
+          </div>
+        </div>
+        <ng-template #noCollections>
+          <h3>У вас немає колекцій</h3>
+          <p>Створіть нову колекцію, щоб додати цей рецепт.</p>
+          <div class="form-group">
+            <input 
+              type="text" 
+              [(ngModel)]="newCollectionName" 
+              class="form-control"
+              placeholder="Назва нової колекції"
+              (input)="onNewCollectionNameChange()">
+            <div class="invalid-feedback" *ngIf="newCollectionError">
+              {{ newCollectionError }}
+            </div>
+          </div>
+        </ng-template>
+      </div>
+      <div class="collection-modal-footer">
+        <button type="button" class="btn btn-cancel" (click)="closeCollectionModal()">
+          Скасувати
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-submit"
+          [disabled]="!selectedCollectionId && !newCollectionName"
+          (click)="confirmAddToCollection()">
+          Додати
+        </button>
       </div>
     </div>
   </div>
@@ -172,25 +231,6 @@
 
         <!-- Right Column - Additional Info -->
         <div class="col-lg-4">
-          <!-- Rating Statistics -->
-          <!-- <div class="info-sidebar-section" *ngIf="recipe.averageRating > 0">
-            <h3 class="sidebar-title">Оцінки</h3>
-            <div class="rating-stats">
-              <div class="average-rating">
-                <span class="rating-number">{{ recipe?.averageRating | number:'1.1-1' }}</span>
-                <div class="rating-stars-display">
-                  <span 
-                    *ngFor="let star of [1,2,3,4,5]" 
-                    class="star-display"
-                    [class.filled]="star <= (recipe?.averageRating || 0)">
-                    ★
-                  </span>
-                </div>
-                <span class="rating-count">{{ recipe?.averageRating }} оцінок</span>
-              </div>
-            </div>
-          </div> -->
-
           <!-- Nutrition Facts -->
           <div class="info-sidebar-section">
             <h3 class="sidebar-title">Харчова цінність (на порцію)</h3>
@@ -255,6 +295,14 @@
       </div>
     </div>
   </div>
+
+  <!-- Edit Form Modal Integration -->
+  <app-recipe-form 
+    *ngIf="showEditForm" 
+    [recipeToEdit]="recipe" 
+    (recipeUpdated)="onRecipeUpdated($event)"
+    (formClosed)="onFormClosed()">
+  </app-recipe-form>
 </div>
 
 <!-- Loading State -->

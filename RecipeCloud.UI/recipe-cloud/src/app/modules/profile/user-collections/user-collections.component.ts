@@ -1,10 +1,14 @@
-import { Component, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, ViewChild } from '@angular/core';
 import { Recipe } from '../../../core/models/recipe.model';
 import { Router } from '@angular/router';
 import { RecipeService } from '../../../core/services/recipe.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { Collection } from '../../../core/models/collection.model';
 import { CollectionService } from '../../../core/services/collection.service';
+import { Observable, of } from 'rxjs';
+import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
+import { APIResponse, PagedResponse } from '../../../core/models/paged-response';
+import { CollectionFormComponent } from '../../collections/collection-form/collection-form.component';
 
 
 @Component({
@@ -12,87 +16,191 @@ import { CollectionService } from '../../../core/services/collection.service';
   templateUrl: './user-collections.component.html',
   styleUrls: ['./user-collections.component.css']
 })
-export class UserCollectionsComponent {
-  collections: Collection[] = [];
+export class UserCollectionsComponent implements OnInit {
+  collections$!: Observable<Collection[]>;
   userId: string | undefined;
-  userCollections: Collection[] = [];
-  
-  // @Output() recipeCreated = new EventEmitter<Recipe>();
-  // @Output() recipeUpdated = new EventEmitter<Recipe>();
-  // @Output() recipeDeleted = new EventEmitter<string>();
+  showAddModal = false;
+  selectedCollectionId: string | null = null;
+  selectedCollection: Collection | null = null;
 
-  constructor(private router: Router, private collectionService: CollectionService, private authService: AuthService) {
+  // Search and recipe properties
+  pageNumber = 1;
+  pageSize = 10;
+  recipes: Recipe[] = [];
+  filteredRecipes: Recipe[] = [];
+  totalCount = 0;
+  showNotFound = false;
+  filters: { name?: string } = {};
+  searchTimeout: any;
+
+  @ViewChild(CollectionFormComponent) collectionFormComponent!: CollectionFormComponent;
+
+  constructor(
+    private router: Router,
+    private collectionService: CollectionService,
+    private authService: AuthService,
+    private recipeService: RecipeService
+  ) {}
+
+  ngOnInit(): void {
     this.userId = this.authService.getCurrentUserId();
-    console.log(this.userId);
-
     if (this.userId) {
-      this.collectionService.getByUserId(this.userId).subscribe((collections) => {
-        this.collections = collections;
-        this.collections.forEach(collection => {
-          console.log(collection.title);
-        });
+      this.collections$ = this.collectionService.collectionsByUser$;
+      this.collectionService.getByUserId(this.userId).pipe(
+        catchError(error => {
+          console.error('Error loading collections:', error);
+          return of([]);
+        })
+      ).subscribe();
+    }
+  }
+
+  createNewCollection(): void {
+    this.collectionFormComponent.showCreateForm();
+  }
+
+  editCollection(collection: Collection): void {
+    if (!this.authService.isAuthenticated()) {
+      alert('Для редагування колекції потрібно увійти в систему');
+      return;
+    }
+    this.selectedCollection = collection;
+  }
+
+  openRecipeSelector(collectionId: string): void {
+    this.selectedCollectionId = collectionId;
+    this.showAddModal = true;
+    this.filters.name = '';
+    this.filteredRecipes = [];
+    this.showNotFound = false;
+  }
+
+  closeRecipeSelector(): void {
+    this.showAddModal = false;
+    this.selectedCollectionId = null;
+    this.filters.name = '';
+    this.filteredRecipes = [];
+    this.showNotFound = false;
+  }
+
+  onDeleteCollection(collectionId: string): void {
+    if (this.userId) {
+      this.collectionService.deleteCollection(collectionId).pipe(
+        catchError(error => {
+          console.error('Error deleting collection:', error);
+          return of(null);
+        })
+      ).subscribe();
+    }
+  }
+
+  removeFromCollection(collectionId: string, recipeId: string): void {
+    if (this.userId) {
+      this.collectionService.removeRecipeFromCollection(collectionId, recipeId).pipe(
+        catchError(error => {
+          console.error('Error removing recipe:', error);
+          return of(null);
+        })
+      ).subscribe();
+    }
+  }
+
+  addRecipeToCollection(recipeId: string): void {
+    if (this.userId && this.selectedCollectionId) {
+      this.collectionService.addRecipeToCollection(this.selectedCollectionId, recipeId).pipe(
+        catchError(error => {
+          console.error('Error adding recipe to collection:', error);
+          return of(null);
+        })
+      ).subscribe(() => {
+        this.closeRecipeSelector();
+        this.collectionService.getByUserId(this.userId!).subscribe();
       });
     }
   }
 
-  editCollection(collectionId: string): void {
-    // const collection = this.userCollections.find(c => c.id === collectionId);
-    // if (collection) {
-    //   const newName = prompt('Введіть нову назву колекції:', collection.name);
-    //   if (newName && newName.trim()) {
-    //     collection.name = newName.trim();
-    //     console.log('Collection updated:', collection);
-    //   }
-    // }
+  onSearchInput(): void {
+    clearTimeout(this.searchTimeout);
+    this.searchTimeout = setTimeout(() => {
+      if (!this.filters.name?.trim()) {
+        this.filteredRecipes = [];
+        this.showNotFound = false;
+        return;
+      }
+      this.pageNumber = 1;
+      this.loadRecipes();
+    }, 300);
   }
 
-  deleteCollection(collectionId: string): void {
-    if (confirm('Ви впевнені, що хочете видалити цю колекцію?')) {
-      // this.userCollections = this.userCollections.filter(c => c.id !== collectionId);
-      console.log('Collection deleted:', collectionId);
+  loadRecipes(): void {
+    this.showNotFound = false;
+    this.recipeService.getRecipes(this.pageNumber, this.pageSize).pipe(
+      switchMap(apiresponse =>
+        of({
+          ...apiresponse,
+          result: {
+            ...apiresponse.result,
+            data: this.smartSearch(this.filters.name || '', apiresponse.result.data)
+          }
+        })
+      ),
+      catchError(error => {
+        console.error('Error loading recipes:', error);
+        return of({
+          statusCode: 500,
+          isSuccess: false,
+          errorsMessages: ['Failed to load recipes'],
+          result: { data: [], totalCount: 0, pageNumber: 0, pageSize: 0 } as PagedResponse<Recipe>
+        });
+      })
+    ).subscribe({
+      next: (apiresponse: APIResponse<PagedResponse<Recipe>>) => {
+        this.filteredRecipes = apiresponse.result.data;
+        this.totalCount = apiresponse.result.totalCount;
+        this.showNotFound = !!this.filters.name?.trim() && !this.filteredRecipes.length;
+      },
+      error: (error) => {
+        console.error('Subscription error:', error);
+      }
+    });
+  }
+
+  smartSearch(searchTerm: string, recipes: Recipe[]): Recipe[] {
+    if (!searchTerm || !searchTerm.trim()) {
+      return [];
+    }
+    const term = searchTerm.toLowerCase().trim();
+    return recipes.filter(recipe => {
+      const titleMatch = recipe.title?.toLowerCase().includes(term) ?? false;
+      const transliteratedMatch = recipe.transliteratedName?.toLowerCase().includes(term) ?? false;
+      return titleMatch || transliteratedMatch;
+    });
+  }
+
+  onCollectionCreated(collection: Collection): void {
+    // Refresh the collections list
+    if (this.userId) {
+      this.collectionService.getByUserId(this.userId).subscribe();
     }
   }
 
-  addRecipeToCollection(collectionId: string): void {
-    // This would typically open a modal with available recipes to add
-    console.log('Adding recipe to collection:', collectionId);
-    // For demo purposes, let's add a random recipe
-    // const collection = this.userCollections.find(c => c.id === collectionId);
-    // if (collection && this.userRecipes.length > 0) {
-    //   const recipeToAdd = this.userRecipes[0]; // Just add the first recipe for demo
-    //   if (!collection.recipes.find(r => r.id === recipeToAdd.id)) {
-    //     collection.recipes.push(recipeToAdd);
-    //     console.log('Recipe added to collection');
-    //   }
-    // }
-  }
-
-  removeFromCollection(collectionId: string, recipeId: string): void {
-    // const collection = this.userCollections.find(c => c.id === collectionId);
-    // if (collection) {
-    //   collection.recipes = collection.recipes.filter(r => r.id !== recipeId);
-    //   console.log('Recipe removed from collection');
-    // }
-  }
-
-  // Collection management methods
-  createNewCollection(): void {
-    const name = prompt('Введіть назву нової колекції:');
-    if (name && name.trim()) {
-      const newCollection: Collection = {
-        id: Date.now().toString(),
-        title: name.trim(),
-        recipes: [],
-        createdAt: new Date(),
-        createdBy: '',
-        updatedAt: new Date(),
-        totalCalories: 0,
-        totalProtein: 0,
-        totalFat: 0,
-        totalCarbohydrates: 0
-      };
-      // this.userCollections.push(newCollection);
-      console.log('New collection created:', newCollection);
+  onCollectionUpdated(updatedCollection: Collection): void {
+    this.selectedCollection = null;
+    // Refresh the collections list
+    if (this.userId) {
+      this.collectionService.getByUserId(this.userId).subscribe();
     }
+  }
+
+  onFormClosed(): void {
+    this.selectedCollection = null;
+  }
+
+  trackByCollectionId(index: number, collection: Collection): string {
+    return collection.id;
+  }
+
+  trackByRecipeId(index: number, recipe: Recipe): string {
+    return recipe.id ?? '';
   }
 }

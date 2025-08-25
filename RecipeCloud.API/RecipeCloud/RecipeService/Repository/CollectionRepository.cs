@@ -11,11 +11,13 @@ namespace RecipeService.Repository
     {
         private readonly ApplicationDbContext _db;
         internal DbSet<Collection> _dbSet;
+        private readonly IRecipeRepository _dbRecipe;
 
-        public CollectionRepository(ApplicationDbContext db)
+        public CollectionRepository(ApplicationDbContext db, IRecipeRepository dbRecipe)
         {
             _db = db;
             _dbSet = db.Set<Collection>();
+            _dbRecipe = dbRecipe;
         }
 
         public async Task CreateAsync(Collection entity)
@@ -81,6 +83,50 @@ namespace RecipeService.Repository
             }
 
             return await query.CountAsync();
+        }
+
+        public async Task<Collection?> AddRecipeToCollection(Guid collectionId, Guid recipeId)
+        {
+            var collection = await GetAsync(c => c.Id == collectionId);
+            if (collection == null)
+            {
+                return null;
+            }
+
+            var recipe = await _dbRecipe.GetAsync(r => r.Id == recipeId);
+            if (recipe == null)
+            {
+                return null;
+            }
+
+            // Check if recipe is already in collection to avoid duplicates
+            if (collection.Recipes.Any(r => r.Id == recipeId))
+            {
+                return collection;
+            }
+
+            collection.Recipes.Add(recipe);
+            await UpdateAsync(collection);
+            return collection;
+        }
+
+        public async Task<Collection?> RemoveRecipeFromCollectionAsync(Guid collectionId, Guid recipeId)
+        {
+            var collection = await GetAsync(c => c.Id == collectionId);
+            if (collection == null)
+            {
+                return null;
+            }
+
+            var recipe = collection.Recipes.FirstOrDefault(r => r.Id == recipeId);
+            if (recipe == null)
+            {
+                return collection; // Recipe not in collection, return unchanged
+            }
+
+            collection.Recipes.Remove(recipe);
+            await UpdateAsync(collection);
+            return collection;
         }
     }
 }

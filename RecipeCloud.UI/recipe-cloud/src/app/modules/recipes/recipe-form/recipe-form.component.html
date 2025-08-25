@@ -1,20 +1,7 @@
-<!-- Create Recipe Button -->
-<div class="create-recipe-section" *ngIf="isAuthenticated">
-  <button 
-    type="button" 
-    class="btn btn-create-recipe" 
-    (click)="showCreateForm()"
-    *ngIf="!showForm">
-    <i class="fas fa-plus"></i>
-    Створити рецепт
-  </button>
-</div>
-
-<!-- Create Recipe Form Modal -->
 <div class="recipe-form-overlay" *ngIf="showForm" (click)="hideCreateForm()">
   <div class="recipe-form-container" (click)="$event.stopPropagation()">
     <div class="recipe-form-header">
-      <h2>Створити новий рецепт</h2>
+      <h2>{{ isEditMode ? 'Редагувати рецепт' : 'Створити новий рецепт' }}</h2>
       <button type="button" class="btn-close" (click)="hideCreateForm()">
         <i class="fas fa-times"></i>
       </button>
@@ -54,34 +41,20 @@
         </div>
 
         <div class="form-row">
-          <!-- <div class="form-group">
-            <label>Категорія</label>
-            <div class="category-display" *ngIf="category">{{ category.name }}</div>
-            <div class="category-display" *ngIf="!category">Не вибрано</div>
-          </div> -->
-          <!-- If category is passed, show as read-only -->
-          <div *ngIf="category; else categorySelect">
-            <label>Категорія</label>
-            <div class="category-display">{{ category.name }}</div>
-          </div>
-
-          <!-- If category is not passed, show a select dropdown -->
-          <ng-template #categorySelect>
-            <div class="form-group">
-              <label for="categoryId">Категорія *</label>
-              <select 
-                id="categoryId" 
-                formControlName="categoryId" 
-                class="form-control"
-                [class.is-invalid]="isFieldInvalid('categoryId')">
-                <option value="">-- Оберіть категорію --</option>
-                <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
-              </select>
-              <div class="invalid-feedback" *ngIf="isFieldInvalid('categoryId')">
-                {{ getFieldError('categoryId') }}
-              </div>
+          <div class="form-group">
+            <label for="categoryId">Категорія *</label>
+            <select 
+              id="categoryId" 
+              formControlName="categoryId" 
+              class="form-control"
+              [class.is-invalid]="isFieldInvalid('categoryId')">
+              <option value="" disabled>-- Оберіть категорію --</option>
+              <option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</option>
+            </select>
+            <div class="invalid-feedback" *ngIf="isFieldInvalid('categoryId')">
+              {{ getFieldError('categoryId') }}
             </div>
-          </ng-template>
+          </div>
 
           <div class="form-group">
             <label for="difficulty">Складність</label>
@@ -123,8 +96,7 @@
           </div>
         </div>
 
-        <!-- Cuisines -->
-         <div class="form-row">
+        <div class="form-row">
           <div class="form-group">
             <label for="cuisine">Кухня світу</label>
             <input 
@@ -132,8 +104,7 @@
               id="cuisine" 
               formControlName="cuisine" 
               class="form-control"
-              [class.is-invalid]="isFieldInvalid('cuisine')"
-              >
+              [class.is-invalid]="isFieldInvalid('cuisine')">
             <div class="invalid-feedback" *ngIf="isFieldInvalid('cuisine')">
               {{ getFieldError('cuisine') }}
             </div>
@@ -143,14 +114,12 @@
         <div class="form-group">
           <label>Зображення рецепту</label>
           
-          <!-- File Upload Area -->
           <div class="file-upload-area" 
               (dragover)="onFileDragOver($event)"
               (dragleave)="onFileDragLeave($event)"
               (drop)="onFileDropped($event)"
               [class.dragover]="false">
             
-            <!-- Upload Zone -->
             <div class="upload-zone" *ngIf="!filePreviewUrl">
               <i class="fas fa-cloud-upload-alt upload-icon"></i>
               <p class="upload-text">Перетягніть файл сюди або</p>
@@ -167,15 +136,14 @@
               <p class="upload-hint">JPG, PNG, GIF до 5MB</p>
             </div>
 
-            <!-- File Preview -->
             <div class="file-preview" *ngIf="filePreviewUrl">
               <div class="preview-image-container">
                 <img [src]="filePreviewUrl" alt="Recipe preview" class="preview-image">
                 <div class="preview-overlay">
                   <div class="preview-info">
                     <i class="fas fa-image"></i>
-                    <span class="file-name">{{ selectedFile?.name }}</span>
-                    <span class="file-size">{{ formatFileSize(selectedFile?.size || 0) }}</span>
+                    <span class="file-name">{{ selectedFile?.name || 'Існуюче зображення' }}</span>
+                    <span class="file-size" *ngIf="selectedFile">{{ formatFileSize(selectedFile?.size || 0) }}</span>
                   </div>
                 </div>
               </div>
@@ -185,7 +153,6 @@
               </button>
             </div>
 
-            <!-- Error Message -->
             <div class="file-error" *ngIf="fileError">
               <i class="fas fa-exclamation-triangle"></i>
               {{ fileError }}
@@ -329,33 +296,6 @@
           </button>
         </div>
 
-        
-        <!-- <div class="characteristic-section">
-          <h4>Кухні світу</h4>
-          <div formArrayName="cuisines">
-            <div *ngFor="let cuisine of cuisines.controls; let i = index" 
-                 [formGroupName]="i" 
-                 class="characteristic-row">
-              <input 
-                type="text" 
-                formControlName="name" 
-                class="form-control"
-                placeholder="Введіть кухню">
-              <button 
-                type="button" 
-                class="btn btn-remove"
-                (click)="removeCuisine(i)"
-                [disabled]="cuisines.length === 1">
-                <i class="fas fa-trash"></i>
-              </button>
-            </div>
-          </div>
-          <button type="button" class="btn btn-add" (click)="addCuisine()">
-            <i class="fas fa-plus"></i>
-            Додати кухню
-          </button>
-        </div> -->
-
         <!-- Diets -->
         <div class="characteristic-section">
           <h4>Дієти</h4>
@@ -384,7 +324,7 @@
         </div>
 
         <!-- Tags -->
-        <!-- <div class="characteristic-section">
+        <div class="characteristic-section">
           <h4>Теги</h4>
           <div formArrayName="tags">
             <div *ngFor="let tag of tags.controls; let i = index" 
@@ -408,7 +348,7 @@
             <i class="fas fa-plus"></i>
             Додати тег
           </button>
-        </div> -->
+        </div>
       </div>
 
       <!-- Form Actions -->
@@ -422,10 +362,10 @@
           [disabled]="recipeForm.invalid || isSubmitting">
           <span *ngIf="isSubmitting">
             <i class="fas fa-spinner fa-spin"></i>
-            Створення...
+            {{ isEditMode ? 'Оновлення...' : 'Створення...' }}
           </span>
           <span *ngIf="!isSubmitting">
-            Створити рецепт
+            {{ isEditMode ? 'Оновити рецепт' : 'Створити рецепт' }}
           </span>
         </button>
       </div>

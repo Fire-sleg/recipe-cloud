@@ -11,7 +11,7 @@ namespace RecipeService.Models.Recipes.DTOs
         public List<string> Ingredients { get; set; }
         public int CookingTime { get; set; }
         public string Difficulty { get; set; }
-        public string ImageUrl { get; set; } // MinIO URL
+        public string? ImageUrl { get; set; } // MinIO URL
         public List<string> Diets { get; set; } = new List<string>();
         public List<string> Allergens { get; set; } = new List<string>();
         public string Cuisine { get; set; }
@@ -26,5 +26,7 @@ namespace RecipeService.Models.Recipes.DTOs
 
         public string TransliteratedName { get; set; } = string.Empty;
         public Guid CategoryId { get; set; }
+
+        public IFormFile? Image { get; set; }
     }
 }

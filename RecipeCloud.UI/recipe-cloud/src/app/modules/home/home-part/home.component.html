@@ -29,7 +29,7 @@
       <!-- Categories Section -->
       <section class="categories">
         <h2>Категорії страв</h2>
-        <div class="category-grid">
+        <div class="category-grid" *ngIf="categories$ | async as categories;">
           <div 
             class="category-card" 
             *ngFor="let category of categories"
