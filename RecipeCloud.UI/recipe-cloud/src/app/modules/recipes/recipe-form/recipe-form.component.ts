@@ -6,6 +6,7 @@ import { Recipe } from '../../../core/models/recipe.model';
 import { Category } from '../../../core/models/category.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { CategoryService } from '../../../core/services/category.service';
+import { APIResponse } from '../../../core/models/api-response';
 
 @Component({
   selector: 'app-recipe-form',
@@ -411,8 +412,8 @@ export class RecipeFormComponent implements OnInit, OnChanges {
 
       if (this.isEditMode && this.recipeToEdit?.id) {
         this.recipeService.updateRecipe(this.recipeToEdit.id, formData).subscribe({
-          next: (updatedRecipe) => {
-            this.recipeUpdated.emit(updatedRecipe);
+          next: (apiresponse) => {
+            this.recipeUpdated.emit(apiresponse.result);
             this.hideCreateForm();
             alert('Рецепт успішно оновлено!');
           },
@@ -426,8 +427,8 @@ export class RecipeFormComponent implements OnInit, OnChanges {
         });
       } else {
         this.recipeService.createRecipe(formData).subscribe({
-          next: (newRecipe) => {
-            this.recipeCreated.emit(newRecipe);
+          next: (apiresponse) => {
+            this.recipeCreated.emit(apiresponse.result);
             this.hideCreateForm();
             alert('Рецепт успішно створено!');
           },

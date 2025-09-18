@@ -91,7 +91,7 @@ namespace RecipeService.Services
             }
         }
 
-        public async Task<string> UploadImageAsync(IFormFile file)
+        public async Task<string> UploadImageAsync(IFormFile file, CancellationToken cancellationToken)
         {
             if (file == null || file.Length == 0)
                 throw new ArgumentException("File is empty or null");
@@ -114,7 +114,7 @@ namespace RecipeService.Services
         }
 
 
-        public async Task DeleteImageAsync(string fileName)
+        public async Task DeleteImageAsync(string fileName, CancellationToken cancellationToken)
         {
             var deleteRequest = new DeleteObjectRequest
             {

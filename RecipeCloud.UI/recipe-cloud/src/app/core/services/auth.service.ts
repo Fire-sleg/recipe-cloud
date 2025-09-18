@@ -27,12 +27,6 @@ export class AuthService {
     }
   }
 
-  // login(username: string, password: string): Observable<{ token: string; user: User }> {
-  //   return this.http.post<{ token: string; user: User }>(`${environment.authApiUrl}/auth/login`, { username, password })
-  //     .pipe(
-  //       tap(response => this.setUser(response.user, response.token))
-  //     );
-  // }
   getCurrentUserId(): string {
     const userJson = localStorage.getItem('user');
     const userId = userJson ? JSON.parse(userJson).id : null;

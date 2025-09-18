@@ -41,7 +41,7 @@ namespace AuthService.Services
             var roles = await _userManager.GetRolesAsync(user);
             foreach (var role in roles)
             {
-                claims.Add(new Claim(ClaimTypes.Role  , role));
+                claims.Add(new Claim(ClaimTypes.Role, role));
             }
             return claims;
         }

@@ -2,29 +2,32 @@
 using Microsoft.AspNetCore.Http;
 using RecipeService.Models.Recipes.DTOs;
 
-namespace RecipeService.Validators
+namespace RecipeService.Validators.RecipeValidators
 {
-    public class RecipeCreateDTOValidator : AbstractValidator<(RecipeCreateDTO DTO, IFormFile Image)>
+    public class RecipeCreateDTOValidator : AbstractValidator<RecipeCreateDTO>
     {
         public RecipeCreateDTOValidator()
         {
-            RuleFor(x => x.DTO.Title)
+            RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Title is required.")
                 .MaximumLength(100).WithMessage("Title must not exceed 100 characters.");
 
-            RuleFor(x => x.DTO.Description)
+            RuleFor(x => x.Description)
                 .MaximumLength(1000).WithMessage("Description must not exceed 1000 characters.")
-                .When(x => x.DTO.Description != null);
+                .When(x => x.Description != null);
 
-            RuleFor(x => x.DTO.Ingredients)
+            RuleFor(x => x.CategoryId)
+            .NotEmpty().WithMessage("Category is required");
+
+            RuleFor(x => x.Ingredients)
                 .NotEmpty().WithMessage("At least one ingredient is required.")
                 .Must(ingredients => ingredients.All(i => !string.IsNullOrWhiteSpace(i)))
                 .WithMessage("Ingredients cannot be empty or whitespace.");
 
-            RuleFor(x => x.DTO.CookingTime)
+            RuleFor(x => x.CookingTime)
                 .GreaterThan(0).WithMessage("Cooking time must be greater than 0 minutes.");
 
-            RuleFor(x => x.DTO.Difficulty)
+            RuleFor(x => x.Difficulty)
                 .NotEmpty().WithMessage("Difficulty is required.")
                 .Must(difficulty => new[] { "easy", "medium", "hard" }.Contains(difficulty.ToLower()))
                 .WithMessage("Difficulty must be 'easy', 'medium', or 'hard'.");

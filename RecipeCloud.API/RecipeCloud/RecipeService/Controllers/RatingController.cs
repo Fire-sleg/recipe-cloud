@@ -3,10 +3,13 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using RecipeService.Models;
 using RecipeService.Models.Rating.DTOs;
 using RecipeService.Models.Recipes.DTOs;
 using RecipeService.Repository;
 using RecipeService.Services;
+using System.Net;
 using System.Security.Claims;
 
 namespace RecipeService.Controllers
@@ -15,88 +18,112 @@ namespace RecipeService.Controllers
     [ApiController]
     public class RatingController : ControllerBase
     {
-        private readonly IRecipeRatingRepository _dbRating;
-        public RatingController(IRecipeRatingRepository dbRating)
+        private readonly IRecipeRatingRepository _ratingRepository;
+        private readonly IValidator<RecipeRatingDTO> _ratingValidator;
+        private readonly IMapper _mapper;
+        private readonly ILogger<RatingController> _logger;
+
+        public RatingController(
+            IRecipeRatingRepository ratingRepository,
+            IValidator<RecipeRatingDTO> ratingValidator,
+            IMapper mapper,
+            ILogger<RatingController> logger)
         {
-            _dbRating = dbRating;
+            _ratingRepository = ratingRepository;
+            _ratingValidator = ratingValidator;
+            _mapper = mapper;
+            _logger = logger;
         }
 
+        #region Helpers
+        private bool TryGetUserId(out Guid userId)
+        {
+            var userIdClaim = User.FindFirst("ident")?.Value;
+            return Guid.TryParse(userIdClaim, out userId);
+        }
+        #endregion
+
+        /// <summary>
+        /// Submit or update a rating for a recipe.
+        /// </summary>
         [Authorize]
         [HttpPost("rate")]
-        public async Task<IActionResult> RateRecipe([FromBody] RecipeRatingDTO ratingDto)
+        public async Task<ActionResult<APIResponse<object>>> RateRecipeAsync(
+            [FromBody] RecipeRatingDTO ratingDto,
+            CancellationToken ct)
         {
-            try
+            var validationResult = await _ratingValidator.ValidateAsync(ratingDto, ct);
+            if (!validationResult.IsValid)
             {
-                if (ratingDto.Rating < 1 || ratingDto.Rating > 5)
-                {
-                    return BadRequest("Rating must be between 1 and 5");
-                }
-
-                var userId = GetCurrentUserId();
-
-                var result = await _dbRating.RateRecipeAsync(userId, ratingDto.RecipeId, ratingDto.Rating);
-
-                if (result)
-                {
-                    return Ok( new { message = "Rating submitted successfully" });
-                }
-
-                return BadRequest("Failed to submit rating");
+                _logger.LogWarning("Validation failed for recipe rating.");
+                return APIResponse<object>.Fail(
+                    string.Join("; ", validationResult.Errors.Select(e => e.ErrorMessage)),
+                    HttpStatusCode.BadRequest);
             }
-            catch (Exception ex)
+
+            if (!TryGetUserId(out var userId))
             {
-                return StatusCode(500, "Internal server error");
+                _logger.LogWarning("Unauthorized attempt to rate recipe.");
+                return APIResponse<object>.Fail("Unauthorized", HttpStatusCode.Unauthorized);
             }
+
+            _logger.LogInformation("User {UserId} rates recipe {RecipeId} with {Rating}.", userId, ratingDto.RecipeId, ratingDto.Rating);
+
+            var success = await _ratingRepository.RateRecipeAsync(userId, ratingDto.RecipeId, ratingDto.Rating);
+            if (!success)
+            {
+                _logger.LogWarning("Failed to submit rating for recipe {RecipeId} by user {UserId}.", ratingDto.RecipeId, userId);
+                return APIResponse<object>.Fail("Failed to submit rating.", HttpStatusCode.BadRequest);
+            }
+
+            return APIResponse<object>.Success(new { message = "Rating submitted successfully" }, HttpStatusCode.OK);
         }
+
+        /// <summary>
+        /// Get current user's rating for a specific recipe.
+        /// </summary>
         [Authorize]
         [HttpGet("get-rating/{recipeId:guid}")]
-        public async Task<IActionResult> GetRating(Guid recipeId)
+        public async Task<ActionResult<APIResponse<RecipeRatingDTO>>> GetRatingAsync(Guid recipeId, CancellationToken ct)
         {
-            try
+            if (recipeId == Guid.Empty)
             {
-                var userId = GetCurrentUserId();
-
-                var rating = await _dbRating.GetRecipeRating(recipeId, userId);
-                if (rating != null)
-                {
-                    return Ok(rating);
-                }
-
-                return BadRequest("Failed to get rating");
+                return APIResponse<RecipeRatingDTO>.Fail("Invalid recipe ID", HttpStatusCode.BadRequest);
             }
-            catch (Exception ex)
+
+            if (!TryGetUserId(out var userId))
             {
-                return StatusCode(500, "Internal server error");
+                return APIResponse<RecipeRatingDTO>.Fail("Unauthorized", HttpStatusCode.Unauthorized);
             }
+
+            _logger.LogInformation("Fetching rating for recipe {RecipeId} by user {UserId}.", recipeId, userId);
+
+            var rating = await _ratingRepository.GetRecipeRatingAsync(recipeId, userId, ct);
+            if (rating == null)
+            {
+                return APIResponse<RecipeRatingDTO>.Fail("No rating found", HttpStatusCode.NotFound);
+            }
+
+            return APIResponse<RecipeRatingDTO>.Success(rating, HttpStatusCode.OK);
         }
 
+        /// <summary>
+        /// Get all ratings of the current user.
+        /// </summary>
         [Authorize]
         [HttpGet("get-user-ratings")]
-        public async Task<IActionResult> GetUserRatings()
+        public async Task<ActionResult<APIResponse<List<RecipeRatingDTO>>>> GetUserRatingsAsync(CancellationToken ct)
         {
-            try
+            if (!TryGetUserId(out var userId))
             {
-                var userId = GetCurrentUserId();
-
-                var ratings = await _dbRating.GetUserRatingAsync(userId);
-                if (ratings != null)
-                {
-                    return Ok(ratings);
-                }
-
-                return BadRequest("Failed to get rating");
+                return APIResponse<List<RecipeRatingDTO>>.Fail("Unauthorized", HttpStatusCode.Unauthorized);
             }
-            catch (Exception ex)
-            {
-                return StatusCode(500, "Internal server error");
-            }
-        }
 
+            _logger.LogInformation("Fetching all ratings for user {UserId}.", userId);
 
-        private Guid GetCurrentUserId()
-        {
-            var userId = Guid.Parse(User.FindFirst("ident")?.Value);
-            return userId;
+            var ratings = await _ratingRepository.GetUserRatingsAsync(userId, ct);
+            var dtos = _mapper.Map<List<RecipeRatingDTO>>(ratings);
+            return APIResponse<List<RecipeRatingDTO>>.Success(dtos, HttpStatusCode.OK);
         }
     }
 }

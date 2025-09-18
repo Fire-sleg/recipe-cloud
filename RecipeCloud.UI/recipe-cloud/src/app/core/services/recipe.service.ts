@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { BehaviorSubject, catchError, Observable, of, tap } from 'rxjs';
+import { BehaviorSubject, catchError, map, Observable, of, tap, throwError } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Recipe } from '../models/recipe.model';
-import { APIResponse, PagedResponse } from '../models/paged-response';
+import { PagedResponse } from '../models/paged-response';
 import { CheckboxFilter } from '../models/checkboxfilter.model';
 import { Rating } from '../models/rating.model';
+import { APIResponse } from '../models/api-response';
 
 @Injectable({
   providedIn: 'root'
@@ -16,86 +17,85 @@ export class RecipeService {
   private recipesByUserSubject = new BehaviorSubject<Recipe[]>([]);
   recipesByUser$ = this.recipesByUserSubject.asObservable();
 
-  getRecipes(page: number, pageSize: number): Observable<(APIResponse<PagedResponse<Recipe>>)> {
+  getRecipes(page: number, pageSize: number): Observable<APIResponse<PagedResponse<Recipe>>> {
     const params = new HttpParams()
-      .set('page', page.toString())
-      .set('pageSize', pageSize.toString());
+      .set('PageNumber', page.toString())  
+      .set('PageSize', pageSize.toString()); 
     return this.http.get<APIResponse<PagedResponse<Recipe>>>(`${environment.apiUrl}/recipes`, { params });
   }
-  getByTransliteratedName(transliteratedName: string){
-    return this.http.get<Recipe>(`${environment.apiUrl}/recipes/` + transliteratedName);
+
+  getByTransliteratedName(transliteratedName: string): Observable<APIResponse<Recipe>> {
+    return this.http.get<APIResponse<Recipe>>(`${environment.apiUrl}/recipes/by-slug/${transliteratedName}`);
   }
-   getRecipeById(id: string): Observable<Recipe> {
-    return this.http.get<Recipe>(`${environment.apiUrl}/recipes/${id}`);
+
+  getRecipeById(id: string): Observable<APIResponse<Recipe>> {
+    return this.http.get<APIResponse<Recipe>>(`${environment.apiUrl}/recipes/${id}`);
   }
-  // getByUserId(userId: string){
-  //   return this.http.get<Recipe[]>(`${environment.apiUrl}/recipes/user/` + userId);
-  // }
 
-  // createRecipe(recipe: FormData): Observable<Recipe> {
-  //   return this.http.post<Recipe>(`${environment.apiUrl}/recipes`, recipe);
-  // }
-
-  // updateRecipe(id: string, recipe: FormData): Observable<Recipe> {
-  //   return this.http.put<Recipe>(`${environment.apiUrl}/recipes/${id}`, recipe);
-  // }
-
-  // deleteRecipe(id: string): Observable<void> {
-  //   return this.http.delete<void>(`${environment.apiUrl}/recipes/${id}`);
-  // }
-
-   /** Завантаження рецептів користувача */
-  getByUserId(userId: string): Observable<Recipe[]> {
-    return this.http.get<Recipe[]>(`${environment.apiUrl}/recipes/user/${userId}`).pipe(
-      tap(recipes => this.recipesByUserSubject.next(recipes)),
+  getByUserId(userId: string): Observable<APIResponse<Recipe[]>> {
+    return this.http.get<APIResponse<Recipe[]>>(`${environment.apiUrl}/recipes/user/${userId}`).pipe(
+      tap(response => {
+        if (response.isSuccess) {
+          this.recipesByUserSubject.next(response.result);
+        }
+      }),
       catchError(err => {
         console.error('Error loading recipes', err);
-        this.recipesByUserSubject.next([]); // fallback на порожній список
-        return of([]);
+        this.recipesByUserSubject.next([]);
+        return of({
+          statusCode: 500,
+          isSuccess: false,
+          errorMessages: ['Failed to load recipes'],
+          result: []
+        } as APIResponse<Recipe[]>);
       })
     );
   }
 
-  /** Створення рецепту */
-  createRecipe(recipe: FormData): Observable<Recipe> {
-    return this.http.post<Recipe>(`${environment.apiUrl}/recipes`, recipe).pipe(
-      tap(newRecipe => {
-        console.log('New recipe added:', newRecipe);
-        const updated = [...this.recipesByUserSubject.value, newRecipe];
-        this.recipesByUserSubject.next(updated);
+  createRecipe(recipe: FormData): Observable<APIResponse<Recipe>> {
+    return this.http.post<APIResponse<Recipe>>(`${environment.apiUrl}/recipes`, recipe).pipe(
+      tap(response => {
+        if (response.isSuccess) {
+          console.log('New recipe added:', response.result);
+          const updated = [...this.recipesByUserSubject.value, response.result];
+          this.recipesByUserSubject.next(updated);
+        }
       })
     );
   }
 
-  /** Оновлення рецепту */
-  updateRecipe(id: string, recipe: FormData): Observable<Recipe> {
-    return this.http.put<Recipe>(`${environment.apiUrl}/recipes/${id}`, recipe).pipe(
-      tap(updatedRecipe => {
-        console.log('Recipe updated:', updatedRecipe);
-        const updated = this.recipesByUserSubject.value.map(r =>
-          r.id === id ? updatedRecipe : r
-        );
-        this.recipesByUserSubject.next(updated);
+  updateRecipe(id: string, recipe: FormData): Observable<APIResponse<any>> {
+    return this.http.put<APIResponse<any>>(`${environment.apiUrl}/recipes/${id}`, recipe).pipe(
+      tap(response => {
+        if (response.isSuccess) {
+          console.log('Recipe updated successfully');
+        }
       })
     );
   }
 
-  /** Видалення рецепту */
-  deleteRecipe(id: string): Observable<void> {
-    return this.http.delete<void>(`${environment.apiUrl}/recipes/${id}`).pipe(
-      tap(() => {
-        const updated = this.recipesByUserSubject.value.filter(r => r.id !== id);
-        this.recipesByUserSubject.next(updated);
+  deleteRecipe(id: string): Observable<APIResponse<any>> {
+    return this.http.delete<APIResponse<any>>(`${environment.apiUrl}/recipes/${id}`).pipe(
+      tap(response => {
+        if (response.isSuccess) {
+          const updated = this.recipesByUserSubject.value.filter(r => r.id !== id);
+          this.recipesByUserSubject.next(updated);
+        }
       }),
       catchError(err => {
         console.error('Error deleting recipe', err);
-        return of(undefined);
+        return of({
+          statusCode: 500,
+          isSuccess: false,
+          errorMessages: ['Failed to delete recipe'],
+          result: null
+        } as APIResponse<any>);
       })
     );
   }
 
-  incrementViewCount(recipeId: string): Observable<any> {
-    return this.http.patch(`${environment.apiUrl}/recipes/${recipeId}/increment-views`, {});
+  incrementViewCount(recipeId: string): Observable<APIResponse<any>> {
+    return this.http.patch<APIResponse<any>>(`${environment.apiUrl}/recipes/${recipeId}/increment-views`, {});
   }
 
   rateRecipe(recipeId: string, rating: number): Observable<any> {
@@ -111,46 +111,77 @@ export class RecipeService {
     return this.http.get<Rating>(`${environment.apiUrl}/rating/get-rating/${recipeId}`);
   }
 
-
-
-
-  getFilterRecipes(filters: any, pageNumber: number, pageSize: number, sortOrder: string): Observable<PagedResponse<Recipe>> {
-    const filterString = createFilterString(filters);
-    /* const filtersString = Object.entries(filters)
-        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
-        .join('&'); */
+  getFilterRecipes(filters: any, pageNumber: number, pageSize: number, sortOrder?: string): Observable<PagedResponse<Recipe>> {
     
-    const params = new HttpParams()
+    let filterString = createFilterString(filters);
+    
+    let params = new HttpParams()
       .set('filters', filterString)
-      .set('pageNumber', pageNumber.toString())
-      .set('pageSize', pageSize.toString())
-      .set('sortOrder', sortOrder);
+      .set('PageNumber', pageNumber.toString())
+      .set('PageSize', pageSize.toString());
 
-      const url = `${environment.apiUrl}/recipes/filter`;
+    if (sortOrder) {
+      params = params.set('sortOrder', sortOrder);
+    }
 
-      const finalUrl = `${url}?${params.toString()}`;
-  
-      console.log('Request URL:', finalUrl); // Виведення кінцевого URL перед відправкою запиту
+    const url = `${environment.apiUrl}/recipes/filter`;
+    const finalUrl = `${url}?${params.toString()}`;
+    console.log('Request URL:', finalUrl);
 
-    return this.http.get<PagedResponse<Recipe>>(`${environment.apiUrl}/recipes/filter`, { params });
+    return this.http.get<APIResponse<PagedResponse<Recipe>>>(url, { params })
+      .pipe(
+        map(response => {
+          if (response.isSuccess) {
+            return response.result;
+          } else {
+            throw new Error(response.errorMessages.join(', '));
+          }
+        }),
+        catchError(error => {
+          console.error('Error filtering recipes:', error);
+          return throwError(() => error);
+        })
+      );
   }
 
-  getCheckboxFilter(categoryId: string | null): Observable<CheckboxFilter> {
-    const params = categoryId ? new HttpParams().set('categoryId', categoryId) : undefined;
+  getCheckboxFilter(categoryId: string): Observable<CheckboxFilter> {
+    const params = new HttpParams().set('categoryId', categoryId);
 
-    return this.http.get<CheckboxFilter>(
+    return this.http.get<APIResponse<CheckboxFilter>>(
       `${environment.apiUrl}/recipes/checkboxfilter`,
       { params }
+    ).pipe(
+      map(response => {
+        if (response.isSuccess) {
+          return response.result;
+        } else {
+          throw new Error(response.errorMessages.join(', '));
+        }
+      }),
+      catchError(error => {
+        console.error('Error fetching checkbox filters:', error);
+        return throwError(() => error);
+      })
     );
+  }
 
-  
+  getRecipesByCategory(categoryId: string): Observable<APIResponse<Recipe[]>> {
+    return this.http.get<APIResponse<Recipe[]>>(`${environment.apiUrl}/recipes/by-category/${categoryId}`);
+  }
+
+  createRecipeBatch(recipes: any[]): Observable<APIResponse<any>> {
+    return this.http.post<APIResponse<any>>(`${environment.apiUrl}/recipes/batch`, recipes);
+  }
+
+  patchRecipe(id: string, patchDocument: any): Observable<APIResponse<any>> {
+    return this.http.patch<APIResponse<any>>(`${environment.apiUrl}/recipes/${id}`, patchDocument);
+  }
+
+  getRecipesCount(): Observable<APIResponse<number>> {
+    return this.http.get<APIResponse<number>>(`${environment.apiUrl}/recipes/count`);
+  }
 }
 
-
-
-}
-
-// Функція для перетворення об'єкта фільтрів на рядок
 function createFilterString(filters: any): string {
   let params = new HttpParams();
   for (const key in filters) {
@@ -160,7 +191,7 @@ function createFilterString(filters: any): string {
         values.forEach(value => {
           params = params.append(key, value);
         });
-      } else {
+      } else if (values !== null && values !== undefined) {
         params = params.append(key, values);
       }
     }

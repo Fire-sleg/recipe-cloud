@@ -37,6 +37,7 @@ export class RecipeDetailComponent implements OnInit {
   newCollectionError: string = '';
   successMessage: string | null = null;
   errorMessage: string | null = null;
+  transliteratedName: string = '';
 
   // Destroy ref for subscription cleanup
   private destroyRef: DestroyRef = inject(DestroyRef);
@@ -88,10 +89,11 @@ export class RecipeDetailComponent implements OnInit {
       });
 
     this.route.paramMap.subscribe(params => {
-      const transliteratedName = params.get('transliteratedName');
-      if (transliteratedName) {
-        this.recipeService.getByTransliteratedName(transliteratedName).subscribe(recipe => {
-          this.recipe = recipe;
+      this.transliteratedName = params.get('transliteratedName') || '';
+      if (this.transliteratedName) {
+        this.recipeService.getByTransliteratedName(this.transliteratedName).subscribe(apiresponse => {
+          debugger;
+          this.recipe = apiresponse.result;
           this.incrementViewCount();
           this.getCurrentUserRating();
           this.sendViewHistory();
@@ -128,10 +130,10 @@ export class RecipeDetailComponent implements OnInit {
       this.router.navigate(['recipes', 'detail', updatedRecipe.transliteratedName]);
     } else {
       this.recipeService.getRecipeById(updatedRecipe.id).subscribe({
-        next: (recipe) => {
-          this.recipe = recipe;
-          if (recipe.transliteratedName) {
-            this.router.navigate(['recipes', 'detail', recipe.transliteratedName]);
+        next: (apiresponse) => {
+          this.recipe = apiresponse.result;
+          if (apiresponse.result.transliteratedName) {
+            this.router.navigate(['recipes', 'detail', apiresponse.result.transliteratedName]);
           }
         },
         error: (error) => {
@@ -257,9 +259,9 @@ export class RecipeDetailComponent implements OnInit {
     if (this.recipe?.id) {
       this.recipeService.incrementViewCount(this.recipe.id).subscribe({
         next: () => {
-          if (this.recipe) {
-            this.recipe.viewCount++;
-          }
+          this.recipeService.getByTransliteratedName(this.transliteratedName).subscribe(apiresponse => {
+            this.recipe = apiresponse.result;
+          });
         },
         error: (error) => {
           console.error('Failed to increment view count:', error);
@@ -279,9 +281,11 @@ export class RecipeDetailComponent implements OnInit {
         next: (response) => {
           this.userRating = rating;
           this.isRatingSubmitted = true;
-          if (this.recipe && response.averageRating !== undefined) {
-            this.recipe.averageRating = response.averageRating;
-          }
+          this.recipeService.getByTransliteratedName(this.transliteratedName).subscribe(apiresponse => {
+            if(this.recipe){
+              this.recipe.averageRating = apiresponse.result.averageRating;
+            }
+          });
         },
         error: (error) => {
           console.error('Failed to submit rating:', error);

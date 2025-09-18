@@ -7,8 +7,9 @@ import { Collection } from '../../../core/models/collection.model';
 import { CollectionService } from '../../../core/services/collection.service';
 import { Observable, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, switchMap } from 'rxjs/operators';
-import { APIResponse, PagedResponse } from '../../../core/models/paged-response';
+import { PagedResponse } from '../../../core/models/paged-response';
 import { CollectionFormComponent } from '../../collections/collection-form/collection-form.component';
+import { APIResponse } from '../../../core/models/api-response';
 
 
 @Component({
@@ -149,7 +150,7 @@ export class UserCollectionsComponent implements OnInit {
         return of({
           statusCode: 500,
           isSuccess: false,
-          errorsMessages: ['Failed to load recipes'],
+          errorMessages: ['Failed to load recipes'],
           result: { data: [], totalCount: 0, pageNumber: 0, pageSize: 0 } as PagedResponse<Recipe>
         });
       })

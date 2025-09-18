@@ -1,8 +1,9 @@
 import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
-import { BehaviorSubject, catchError, Observable, of, tap } from "rxjs";
+import { BehaviorSubject, catchError, map, Observable, of, tap, throwError } from "rxjs";
 import { Collection } from "../models/collection.model";
 import { environment } from "../../../environments/environment";
+import { APIResponse } from "../models/api-response";
 
 @Injectable({
   providedIn: 'root'
@@ -16,37 +17,53 @@ export class CollectionService {
   successMessage$ = new BehaviorSubject<string | null>(null);
   errorMessage$ = new BehaviorSubject<string | null>(null);
 
-  createCollection(collection: FormData):Observable<Collection>{
-    // return this.http.post<Collection>(`${environment.apiUrl}/collections`, collection);
-    return this.http.post<Collection>(`${environment.apiUrl}/collections`, collection).pipe(
-      tap(newCollection => {
-        console.log('New collection added:', newCollection); // Debug log
-        const updated = [...this.collectionsByUserSubject.value, newCollection];
-        this.collectionsByUserSubject.next(updated);
+  createCollection(collection: FormData): Observable<Collection> {
+    return this.http.post<APIResponse<Collection>>(`${environment.apiUrl}/collections`, collection).pipe(
+      map(response => {
+        if (response.isSuccess) {
+          const updated = [...this.collectionsByUserSubject.value, response.result];
+          this.collectionsByUserSubject.next(updated);
+          return response.result;
+        } else {
+          throw new Error(response.errorMessages.join(', '));
+        }
+      }),
+      catchError(error => {
+        console.error('Error creating collection:', error);
+        return throwError(() => error);
       })
-      // REMOVED: catchError (let errors propagate to subscriber)
     );
   }
 
-  getByUserId(userId: string){
-    // return this.http.get<Collection[]>(`${environment.apiUrl}/collections/user/` + userId);
-    return this.http.get<Collection[]>(`${environment.apiUrl}/collections/user/` + userId).pipe(
-      tap(collectionsByUser => this.collectionsByUserSubject.next(collectionsByUser)),
+  getByUserId(userId: string): Observable<Collection[]> {
+    return this.http.get<APIResponse<Collection[]>>(`${environment.apiUrl}/collections/user/${userId}`).pipe(
+      map(response => {
+        if (response.isSuccess) {
+          this.collectionsByUserSubject.next(response.result);
+          return response.result;
+        } else {
+          this.collectionsByUserSubject.next([]);
+          throw new Error(response.errorMessages.join(', '));
+        }
+      }),
       catchError(err => {
         console.error('Error loading collections', err);
-        this.collectionsByUserSubject.next([]); // fallback
+        this.collectionsByUserSubject.next([]);
         return of([]);
       })
     );
   }
 
-  deleteCollection(id: string){
-    // return this.http.delete(`${environment.apiUrl}/collections/` + id);
-    return this.http.delete(`${environment.apiUrl}/collections/` + id).pipe(
-      tap(() => {
-        // оновлюємо локальний state без повторного запиту
-        const updated = this.collectionsByUserSubject.value.filter(c => c.id !== id);
-        this.collectionsByUserSubject.next(updated);
+  deleteCollection(id: string): Observable<any> {
+    return this.http.delete<APIResponse<any>>(`${environment.apiUrl}/collections/${id}`).pipe(
+      map(response => {
+        if (response.isSuccess) {
+          const updated = this.collectionsByUserSubject.value.filter(c => c.id !== id);
+          this.collectionsByUserSubject.next(updated);
+          return response.result;
+        } else {
+          throw new Error(response.errorMessages.join(', '));
+        }
       }),
       catchError(err => {
         console.error('Error deleting collection', err);
@@ -55,43 +72,55 @@ export class CollectionService {
     );
   }
 
-
   addRecipeToCollection(collectionId: string, recipeId: string): Observable<Collection> {
-    return this.http.post<Collection>(
+    return this.http.post<APIResponse<Collection>>(
       `${environment.apiUrl}/collections/${collectionId}/recipes`,
       { recipeId }
     ).pipe(
-      tap(updated => {
-        this.collectionsByUserSubject.next(
-          this.collectionsByUserSubject.value.map(c => c.id === collectionId ? updated : c)
-        );
+      map(response => {
+        if (response.isSuccess) {
+          this.collectionsByUserSubject.next(
+            this.collectionsByUserSubject.value.map(c => c.id === collectionId ? response.result : c)
+          );
+          return response.result;
+        } else {
+          throw new Error(response.errorMessages.join(', '));
+        }
       })
     );
   }
-
 
   removeRecipeFromCollection(collectionId: string, recipeId: string): Observable<Collection> {
-    return this.http.delete<Collection>(
+    return this.http.delete<APIResponse<Collection>>(
       `${environment.apiUrl}/collections/${collectionId}/recipes/${recipeId}`
     ).pipe(
-      tap(updated => {
-        this.collectionsByUserSubject.next(
-          this.collectionsByUserSubject.value.map(c => c.id === collectionId ? updated : c)
-        );
+      map(response => {
+        if (response.isSuccess) {
+          this.collectionsByUserSubject.next(
+            this.collectionsByUserSubject.value.map(c => c.id === collectionId ? response.result : c)
+          );
+          return response.result;
+        } else {
+          throw new Error(response.errorMessages.join(', '));
+        }
       })
     );
   }
 
-
   updateCollection(id: string, collection: FormData): Observable<Collection> {
-    return this.http.put<Collection>(`${environment.apiUrl}/collections/${id}`, collection).pipe(
-      tap(updatedCollection => {
-        console.log('Collection updated:', updatedCollection);
-        const updated = this.collectionsByUserSubject.value.map(c => 
-          c.id === id ? updatedCollection : c
-        );
-        this.collectionsByUserSubject.next(updated);
-        this.successMessage$.next('Колекцію успішно оновлено!');
+    return this.http.put<APIResponse<Collection>>(`${environment.apiUrl}/collections/${id}`, collection).pipe(
+      map(response => {
+        if (response.isSuccess) {
+          const updated = this.collectionsByUserSubject.value.map(c =>
+            c.id === id ? response.result : c
+          );
+          this.collectionsByUserSubject.next(updated);
+          this.successMessage$.next('Колекцію успішно оновлено!');
+          return response.result;
+        } else {
+          this.errorMessage$.next('Помилка при оновленні колекції');
+          throw new Error(response.errorMessages.join(', '));
+        }
       }),
       catchError(err => {
         console.error('Error updating collection', err);
@@ -101,7 +130,6 @@ export class CollectionService {
     );
   }
 
-
   clearSuccessMessage(): void {
     this.successMessage$.next(null);
   }
@@ -109,5 +137,4 @@ export class CollectionService {
   clearErrorMessage(): void {
     this.errorMessage$.next(null);
   }
-
 }

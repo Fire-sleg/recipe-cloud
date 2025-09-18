@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using RecipeService.Models.Recipes.DTOs;
 
-namespace RecipeService.Validators
+namespace RecipeService.Validators.RecipeValidators
 {
     public class RecipeUpdateDTOValidator : AbstractValidator<(RecipeUpdateDTO DTO, IFormFile Image)>
     {

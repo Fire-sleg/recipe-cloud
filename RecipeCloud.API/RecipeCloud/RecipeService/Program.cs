@@ -2,39 +2,31 @@ using Amazon.S3;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using RecipeService;
 using RecipeService.Data;
+using RecipeService.Middlewares;
 using RecipeService.Repository;
 using RecipeService.Services;
-using RecipeService.Validators;
+using RecipeService.Validators.CollectionValidators;
+using RecipeService.Validators.RecipeRatingValidators;
+using RecipeService.Validators.RecipeValidators;
 using StackExchange.Redis;
 using System;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json.Serialization;
 
-//var builder = WebApplication.CreateBuilder(args);
-
-//// Додаємо сервіси
-//builder.Services.AddDbContext<ApplicationDbContext>(options =>
-//    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
-//builder.Services.AddStackExchangeRedisCache(options =>
-//{
-//    options.Configuration = builder.Configuration["Redis:ConnectionString"];
-//});
-//builder.Services.AddHttpClient();
-
-
 var builder = WebApplication.CreateBuilder(args);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-//builder.Services.AddStackExchangeRedisCache(options =>
-//{
-//    options.Configuration = builder.Configuration["Redis:ConnectionString"];
-//});
+
 
 builder.Services.AddCors(options =>
 {
@@ -62,6 +54,8 @@ builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICollectionRepository, CollectionRepository>();
 builder.Services.AddScoped<IRecipeRatingRepository, RecipeRatingRepository>();
 
+builder.Services.AddScoped<IRedisCache, RedisCache>();
+
 builder.Services.AddScoped<IMinIOService, MinIOService>();
 
 builder.Services.AddAutoMapper(typeof(MappingConfig)); // Реєстрація AutoMapper
@@ -77,6 +71,7 @@ builder.Services.AddValidatorsFromAssemblyContaining<RecipeCreateDTOValidator>()
 builder.Services.AddValidatorsFromAssemblyContaining<RecipeUpdateDTOValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CollectionCreateValidator>();
 builder.Services.AddValidatorsFromAssemblyContaining<CollectionUpdateValidator>();
+builder.Services.AddValidatorsFromAssemblyContaining<RecipeRatingValidator>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -166,8 +161,62 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddRateLimiter(options => {
+    options.AddFixedWindowLimiter("basic", options => {
+        options.Window = TimeSpan.FromSeconds(10);
+        options.PermitLimit = 5;
+    });
+});
+
+// OpenTelemetry конфігурація (вбудована в .NET 8+)
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .AddAspNetCoreInstrumentation() // Інструментація для ASP.NET Core
+            .AddHttpClientInstrumentation() // Для HttpClient (наприклад, MinIO)
+            .AddConsoleExporter() // Експорт до консолі для dev
+            .AddOtlpExporter(options => // OTLP для production (наприклад, до Jaeger або Zipkin)
+            {
+                options.Endpoint = new Uri("http://localhost:4317"); // Приклад ендпоінту
+            });
+    })
+    .WithMetrics(meterProviderBuilder =>
+    {
+        meterProviderBuilder
+            .AddAspNetCoreInstrumentation()
+            .AddConsoleExporter();
+    });
+
+
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true; 
+    options.Providers.Add<BrotliCompressionProvider>();
+    options.Providers.Add<GzipCompressionProvider>();
+});
+
+var policyCollection = new HeaderPolicyCollection()
+    .AddFrameOptionsDeny()
+    .AddContentTypeOptionsNoSniff()
+    .AddStrictTransportSecurityMaxAgeIncludeSubDomains(maxAgeInSeconds: 60 * 60 * 24 * 365) // maxage = one year in seconds
+    .AddReferrerPolicyStrictOriginWhenCrossOrigin()
+    .RemoveServerHeader()
+    .AddContentSecurityPolicy(builder =>
+    {
+        builder.AddObjectSrc().None();
+        builder.AddFormAction().Self();
+        builder.AddFrameAncestors().None();
+    })
+    .AddCustomHeader("X-My-Test-Header", "Header value");
+
+
 
 var app = builder.Build();
+app.UseMiddleware<ExceptionHandlingMiddleware>();
+app.UseMiddleware<RequestLoggingMiddleware>();
+//app.UseResponseCompression(); // before others middleware
+//app.UseSecurityHeaders(policyCollection);
 
 if (app.Environment.IsDevelopment())
 {
@@ -180,6 +229,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+app.UseRateLimiter();
 
 app.UseHttpsRedirection();
 app.UseCors("AllowAll");

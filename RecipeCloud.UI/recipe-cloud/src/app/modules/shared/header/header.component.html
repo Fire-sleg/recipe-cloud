@@ -1,20 +1,4 @@
-<!-- <mat-toolbar color="primary">
-  <a class="navbar-brand" [routerLink]="['']">RecipeCloud</a>
-  <div class="spacer"></div>
-  <button mat-button routerLink="/recipes">Recipes</button>
-  <button mat-button routerLink="/subscriptions-feed" *ngIf="isAuthenticated$ | async">Subscriptions</button>
-  <button mat-button routerLink="/profile" *ngIf="isAuthenticated$ | async">Profile</button>
-  <button mat-button routerLink="/admin" *ngIf="(isAuthenticated$ | async) && (currentUser$ | async)?.isAdmin">Admin</button>
-  <button mat-icon-button routerLink="/notifications" *ngIf="isAuthenticated$ | async">
-    <mat-icon [matBadge]="(unreadCount$ | async) || 0" matBadgeColor="warn">notifications</mat-icon>
-  </button>
-  <button mat-button (click)="logout()" *ngIf="isAuthenticated$ | async">Logout</button>
-  <button mat-button routerLink="/auth/login" *ngIf="!(isAuthenticated$ | async)">Login</button>
-  <button mat-button routerLink="/auth/register" *ngIf="!(isAuthenticated$ | async)">Register</button>
-</mat-toolbar>
 
-
- -->
 <mat-toolbar class="recipe-header">
   <a class="navbar-brand" [routerLink]="['']">RecipeCloud</a>
   <div class="spacer"></div>
@@ -25,11 +9,11 @@
     <span class="btn-text">Профіль</span>
   </button>
   
-  <button mat-button routerLink="/admin" routerLinkActive="active" class="admin-btn" 
+  <!-- <button mat-button routerLink="/admin" routerLinkActive="active" class="admin-btn" 
           *ngIf="(isAuthenticated$ | async) && (currentUser$ | async)?.isAdmin">
     <mat-icon>admin_panel_settings</mat-icon>
     <span class="btn-text">Адмін панель</span>
-  </button>
+  </button> -->
   
   <button mat-button (click)="logout()" class="logout-btn" *ngIf="isAuthenticated$ | async">
     <mat-icon>logout</mat-icon>

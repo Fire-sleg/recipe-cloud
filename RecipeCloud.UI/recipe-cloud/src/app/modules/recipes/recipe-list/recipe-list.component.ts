@@ -55,8 +55,6 @@ export class RecipeListComponent  implements OnInit  {
     this.getCheckboxFilter();
     // this.setPreferencesFromStorage();
     // this.loadRecipes();
-    
-
   }
 
   setPreferencesFromStorage(): void {
@@ -84,32 +82,6 @@ export class RecipeListComponent  implements OnInit  {
     }
   }
 
-  // setPreferencesFromStorage(): void {
-  //   const prefsJson = localStorage.getItem('preferences');
-  //   if (!prefsJson) return;
-
-  //   try {
-  //     const prefs: UserPreferences = JSON.parse(prefsJson);
-
-  //     this.filters.diets = [...prefs.dietaryPreferences];
-  //     this.filters.allergens = [...prefs.allergens];
-  //     this.filters.cuisines = [...prefs.favoriteCuisines];
-  //   } catch (e) {
-  //     console.error('❌ Invalid preferences format in localStorage', e);
-  //   }
-  // }
-
-  // getCheckboxFilter():void{
-    
-  //   if (this.category) {
-  //     this.recipeService.getCheckboxFilter(this.category?.id ?? null)
-  //       .subscribe((filter: CheckboxFilter) => {
-  //         this.checkboxFilter = filter;
-  //       });
-
-  //   }
-  // }
-
   getCheckboxFilter(): void {
     if (this.category) {
       this.recipeService.getCheckboxFilter(this.category.id).subscribe((filter: CheckboxFilter) => {
@@ -121,23 +93,6 @@ export class RecipeListComponent  implements OnInit  {
     }
   }
 
-  
-
-
-  // loadRecipes(): void {
-  //   if (this.filters.title) {
-  //     this.recipeService.getFilterRecipes(this.filters, this.pageNumber, this.pageSize, this.sortOrder).subscribe((response: PagedResponse<Recipe>) => {
-  //       this.filteredRecipes = smartSearch(this.filters.title, response.data);
-  //       this.recipes = response.data;
-  //       this.totalCount = response.totalCount;
-  //     });
-  //   } else {
-  //     this.recipeService.getFilterRecipes(this.filters, this.pageNumber, this.pageSize, this.sortOrder).subscribe((response: PagedResponse<Recipe>) => {
-  //       this.recipes = response.data;
-  //       this.totalCount = response.totalCount;
-  //     });
-  //   }
-  // }
   loadRecipes(): void {
     this.recipeService.getFilterRecipes(this.filters, this.pageNumber, this.pageSize, this.sortOrder)
       .subscribe((response: PagedResponse<Recipe>) => {
@@ -222,10 +177,6 @@ export class RecipeListComponent  implements OnInit  {
     }
   }
 
-  // onPageChange(newPageNumber: number): void {
-  //   this.pageNumber = newPageNumber;
-  //   this.loadProducts();
-  // }
   onPageChange(newPageNumber: number): void {
     if (newPageNumber > 0 && newPageNumber <= this.getMaxPage()) {
       this.pageNumber = newPageNumber;
@@ -253,14 +204,6 @@ export class RecipeListComponent  implements OnInit  {
     this.pageNumber = 1; // Скинути до першої сторінки при скиданні фільтрів
     this.loadRecipes();
   }
-
-  // showCreateRecipeForm(){
-  //   this.router.navigate(['create'], {
-  //     relativeTo: this.route,
-  //     state: { category: this.category }
-  //   });
-
-  // }
 
 }
 

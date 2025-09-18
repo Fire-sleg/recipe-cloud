@@ -11,9 +11,6 @@ import { Recipe } from '../models/recipe.model';
 export class RecommendationService {
   constructor(private http: HttpClient) {}
 
-  // getRecommendations(limit: number): Observable<Recipe[]> {
-  //   return this.http.get<Recipe[]>(`${environment.recomApiUrl}/recommendations/` + limit);
-  // }
   getRecommendations(limit: number): Observable<Recipe[]> {
   return this.http.get<Recipe[]>(`${environment.recomApiUrl}/recommendations`, {
     params: { limit: limit.toString() }

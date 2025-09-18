@@ -76,7 +76,6 @@ export class UserProfileComponent implements OnInit {
   ngOnInit(): void {
     this.initializeForm();
     this.loadUserProfile();
-    this.loadUserData();
   }
 
   // Tab navigation methods
@@ -115,12 +114,6 @@ export class UserProfileComponent implements OnInit {
     if (preferences) {
       this.populateForm(preferences);
     }
-  }
-
-  private loadUserData(): void {
-    // Load user recipes and collections from API or localStorage
-    // This is where you would make API calls to get user's recipes and collections
-    console.log('Loading user recipes and collections...');
   }
 
   private getUserPreferencesFromStorage(): any {
@@ -220,30 +213,6 @@ export class UserProfileComponent implements OnInit {
       console.log('Форму скинуто');
     }
   }
-
-  // Recipe management methods
-  createNewRecipe(): void {
-    // Navigate to recipe creation page or open modal
-    console.log('Creating new recipe...');
-    // this.router.navigate(['/recipes/create']);
-  }
-
-  editRecipe(recipeId: string): void {
-    console.log('Editing recipe:', recipeId);
-    // this.router.navigate(['/recipes/edit', recipeId]);
-  }
-
-  deleteRecipe(recipeId: string): void {
-    if (confirm('Ви впевнені, що хочете видалити цей рецепт?')) {
-      // this.userRecipes = this.userRecipes.filter(recipe => recipe.id !== recipeId);
-      console.log('Recipe deleted:', recipeId);
-      // API call to delete recipe
-    }
-  }
-
-  
-
-  
 
   // Utility methods for displaying selected preferences
   getSelectedDiets(): string[] {

@@ -280,7 +280,8 @@ import { AuthService } from '../../../core/services/auth.service';
 import { RecipeService } from '../../../core/services/recipe.service';
 import { Collection } from '../../../core/models/collection.model';
 import { Recipe } from '../../../core/models/recipe.model';
-import { APIResponse, PagedResponse } from '../../../core/models/paged-response';
+import { PagedResponse } from '../../../core/models/paged-response';
+import { APIResponse } from '../../../core/models/api-response';
 
 @Component({
   selector: 'app-collection-form',

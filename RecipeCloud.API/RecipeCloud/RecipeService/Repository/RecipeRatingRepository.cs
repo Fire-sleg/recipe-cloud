@@ -1,8 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Nest;
 using RecipeService.Data;
 using RecipeService.Models.Rating;
 using RecipeService.Models.Rating.DTOs;
+using System.Threading;
 
 namespace RecipeService.Repository
 {
@@ -13,118 +13,92 @@ namespace RecipeService.Repository
 
         public RecipeRatingRepository(ApplicationDbContext db, IRecipeRepository dbRecipe)
         {
+            ArgumentNullException.ThrowIfNull(db);
+            ArgumentNullException.ThrowIfNull(dbRecipe);
+
             _db = db;
             _dbRecipe = dbRecipe;
         }
 
-        public async Task<double> GetAverageRatingAsync(Guid recipeId)
+        public async Task<double> GetAverageRatingAsync(Guid recipeId, CancellationToken cancellationToken = default)
         {
-            var ratings = await _db.RecipeRatings
+            var average = await _db.RecipeRatings
                 .Where(r => r.RecipeId == recipeId)
-                .ToListAsync();
+                .AsNoTracking()
+                .AverageAsync(r => r.Rating, cancellationToken);
 
-            if (!ratings.Any())
-            {
-                return 0;
-            }
-
-            var averageRating = ratings.Average(r => r.Rating);
-           
-
-            return averageRating;
-        }
-        public async Task SaveAsync()
-        {
-            await _db.SaveChangesAsync();
+            return average;
         }
 
-        public async Task<bool> RateRecipeAsync(Guid userId, Guid recipeId, int rating)
+        public Task SaveAsync(CancellationToken cancellationToken = default) =>
+            _db.SaveChangesAsync(cancellationToken);
+
+        public async Task<bool> RateRecipeAsync(Guid userId, Guid recipeId, int rating, CancellationToken cancellationToken = default)
         {
-            try
+            // Check if user has already rated this recipe
+            var existingRating = await _db.RecipeRatings
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.RecipeId == recipeId, cancellationToken);
+
+            if (existingRating != null)
             {
-                // Перевіряємо, чи користувач вже оцінив цей рецепт
-                var existingRating = await _db.RecipeRatings
-                    .FirstOrDefaultAsync(r => r.UserId == userId && r.RecipeId == recipeId);
-
-                if (existingRating != null)
-                {
-                    // Оновлюємо існуючий рейтинг
-                    existingRating.Rating = rating;
-                    existingRating.RatedAt = DateTime.UtcNow;
-                }
-                else
-                {
-                    // Створюємо новий рейтинг
-                    var newRating = new RecipeRating
-                    {
-                        UserId = userId,
-                        RecipeId = recipeId,
-                        Rating = rating,
-                        RatedAt = DateTime.UtcNow
-                    };
-
-                    await _db.RecipeRatings.AddAsync(newRating);
-
-                }
-
-                var averageRating = GetAverageRatingAsync(recipeId);
-                var recipe = await _dbRecipe.GetAsync(r => r.Id == recipeId);
-                recipe.AverageRating = averageRating.Result;
-                await _dbRecipe.SaveAsync();
-
-                await SaveAsync();
-                return true;
+                // Update existing rating
+                existingRating.Rating = rating;
+                existingRating.RatedAt = DateTime.UtcNow;
             }
-            catch
+            else
             {
-                return false;
+                // Create new rating
+                var newRating = new RecipeRating
+                {
+                    UserId = userId,
+                    RecipeId = recipeId,
+                    Rating = rating,
+                    RatedAt = DateTime.UtcNow
+                };
+
+                await _db.RecipeRatings.AddAsync(newRating, cancellationToken);
             }
+
+            await SaveAsync(cancellationToken);
+
+            // Update recipe's average rating
+            var averageRating = await GetAverageRatingAsync(recipeId, cancellationToken);
+            var recipe = await _dbRecipe.GetAsync(r => r.Id == recipeId, isTracked: true, cancellationToken: cancellationToken);
+            if (recipe == null)
+            {
+                return false; // Recipe not found
+            }
+
+            recipe.AverageRating = averageRating;
+            await _dbRecipe.UpdateAsync(recipe, cancellationToken);
+
+            return true;
         }
 
-        public async Task<RecipeRatingDTO> GetRecipeRating(Guid recipeId, Guid userId)
+        public async Task<RecipeRatingDTO?> GetRecipeRatingAsync(Guid recipeId, Guid userId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                // Перевіряємо, чи користувач вже оцінив цей рецепт
-                var existingRating = await _db.RecipeRatings
-                    .FirstOrDefaultAsync(r => r.UserId == userId && r.RecipeId == recipeId);
+            var existingRating = await _db.RecipeRatings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(r => r.UserId == userId && r.RecipeId == recipeId, cancellationToken);
 
-                if (existingRating != null)
-                {
-                    var ratingDTO = new RecipeRatingDTO
-                    {
-                        RecipeId = existingRating.RecipeId,
-                        Rating = existingRating.Rating
-                    };
-                    return ratingDTO;
-                }
-
-                return null;
-            }
-            catch
+            if (existingRating == null)
             {
                 return null;
             }
+
+            return new RecipeRatingDTO
+            {
+                RecipeId = existingRating.RecipeId,
+                Rating = existingRating.Rating
+            };
         }
 
-        public async Task<List<RecipeRating>> GetUserRatingAsync(Guid userId)
+        public async Task<List<RecipeRating>> GetUserRatingsAsync(Guid userId, CancellationToken cancellationToken = default)
         {
-            try
-            {
-                // Перевіряємо, чи користувач вже оцінив цей рецепт
-                var userRatings = await _db.RecipeRatings.Where(r => r.UserId == userId).ToListAsync();
-
-                if (userRatings != null)
-                {
-                    return userRatings;
-                }
-
-                return null;
-            }
-            catch
-            {
-                return null;
-            }
+            return await _db.RecipeRatings
+                .AsNoTracking()
+                .Where(r => r.UserId == userId)
+                .ToListAsync(cancellationToken);
         }
     }
 }

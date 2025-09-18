@@ -1,59 +1,76 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using RecipeService.Data;
 using RecipeService.Models.Collections;
-using RecipeService.Models.Pagination;
 using System.Linq.Expressions;
-using System.Threading.Tasks;
+using System.Threading;
 
 namespace RecipeService.Repository
 {
     public class CollectionRepository : ICollectionRepository
     {
         private readonly ApplicationDbContext _db;
-        internal DbSet<Collection> _dbSet;
+        private readonly DbSet<Collection> _dbSet;
         private readonly IRecipeRepository _dbRecipe;
 
         public CollectionRepository(ApplicationDbContext db, IRecipeRepository dbRecipe)
         {
+            ArgumentNullException.ThrowIfNull(db);
+            ArgumentNullException.ThrowIfNull(dbRecipe);
+
             _db = db;
             _dbSet = db.Set<Collection>();
             _dbRecipe = dbRecipe;
         }
 
-        public async Task CreateAsync(Collection entity)
+        public async Task CreateAsync(Collection entity, CancellationToken cancellationToken = default)
         {
-            await _dbSet.AddAsync(entity);
-            await SaveAsync();
+            ArgumentNullException.ThrowIfNull(entity);
+
+            await _dbSet.AddAsync(entity, cancellationToken);
+            await SaveAsync(cancellationToken);
         }
 
-        public async Task<Collection> UpdateAsync(Collection entity)
+        public async Task<Collection> UpdateAsync(Collection entity, CancellationToken cancellationToken = default)
         {
+            ArgumentNullException.ThrowIfNull(entity);
+
             _dbSet.Update(entity);
-            await SaveAsync();
+            await SaveAsync(cancellationToken);
             return entity;
         }
 
-        public async Task RemoveAsync(Collection entity)
+        public async Task RemoveAsync(Collection entity, CancellationToken cancellationToken = default)
         {
+            ArgumentNullException.ThrowIfNull(entity);
+
             _dbSet.Remove(entity);
-            await SaveAsync();
+            await SaveAsync(cancellationToken);
         }
 
-        public async Task<List<Collection>> GetAllAsync(Expression<Func<Collection, bool>>? filter = null)
+        public async Task<List<Collection>> GetAllAsync(
+            Expression<Func<Collection, bool>>? filter = null,
+            CancellationToken cancellationToken = default)
         {
-            IQueryable<Collection> query = _dbSet.Include(c => c.Recipes);
+            IQueryable<Collection> query = _dbSet
+                .Include(c => c.Recipes)
+                .AsSplitQuery();
 
             if (filter != null)
             {
                 query = query.Where(filter);
             }
 
-            return await query.ToListAsync();
+            return await query.ToListAsync(cancellationToken);
         }
 
-        public async Task<Collection> GetAsync(Expression<Func<Collection, bool>>? filter = null, bool isTracked = true)
+        public async Task<Collection?> GetAsync(
+            Expression<Func<Collection, bool>>? filter = null,
+            bool isTracked = true,
+            CancellationToken cancellationToken = default)
         {
-            IQueryable<Collection> query = _dbSet.Include(c => c.Recipes);
+            IQueryable<Collection> query = _dbSet
+                .Include(c => c.Recipes)
+                .AsSplitQuery();
 
             if (!isTracked)
             {
@@ -65,15 +82,15 @@ namespace RecipeService.Repository
                 query = query.Where(filter);
             }
 
-            return await query.FirstOrDefaultAsync();
+            return await query.FirstOrDefaultAsync(cancellationToken);
         }
 
-        public async Task SaveAsync()
-        {
-            await _db.SaveChangesAsync();
-        }
+        public Task SaveAsync(CancellationToken cancellationToken = default) =>
+            _db.SaveChangesAsync(cancellationToken);
 
-        public async Task<int> CountAsync(Expression<Func<Collection, bool>>? filter = null)
+        public async Task<int> CountAsync(
+            Expression<Func<Collection, bool>>? filter = null,
+            CancellationToken cancellationToken = default)
         {
             IQueryable<Collection> query = _dbSet;
 
@@ -82,18 +99,18 @@ namespace RecipeService.Repository
                 query = query.Where(filter);
             }
 
-            return await query.CountAsync();
+            return await query.CountAsync(cancellationToken);
         }
 
-        public async Task<Collection?> AddRecipeToCollection(Guid collectionId, Guid recipeId)
+        public async Task<Collection?> AddRecipeToCollection(Guid collectionId, Guid recipeId, CancellationToken cancellationToken = default)
         {
-            var collection = await GetAsync(c => c.Id == collectionId);
+            var collection = await GetAsync(c => c.Id == collectionId, isTracked: true, cancellationToken: cancellationToken);
             if (collection == null)
             {
                 return null;
             }
 
-            var recipe = await _dbRecipe.GetAsync(r => r.Id == recipeId);
+            var recipe = await _dbRecipe.GetAsync(r => r.Id == recipeId, isTracked: false, cancellationToken: cancellationToken);
             if (recipe == null)
             {
                 return null;
@@ -106,13 +123,13 @@ namespace RecipeService.Repository
             }
 
             collection.Recipes.Add(recipe);
-            await UpdateAsync(collection);
+            await UpdateAsync(collection, cancellationToken);
             return collection;
         }
 
-        public async Task<Collection?> RemoveRecipeFromCollectionAsync(Guid collectionId, Guid recipeId)
+        public async Task<Collection?> RemoveRecipeFromCollectionAsync(Guid collectionId, Guid recipeId, CancellationToken cancellationToken = default)
         {
-            var collection = await GetAsync(c => c.Id == collectionId);
+            var collection = await GetAsync(c => c.Id == collectionId, isTracked: true, cancellationToken: cancellationToken);
             if (collection == null)
             {
                 return null;
@@ -125,8 +142,9 @@ namespace RecipeService.Repository
             }
 
             collection.Recipes.Remove(recipe);
-            await UpdateAsync(collection);
+            await UpdateAsync(collection, cancellationToken);
             return collection;
         }
+
     }
 }

@@ -9,10 +9,7 @@ const routes: Routes = [
   { path: 'recipes', loadChildren: () => import('./modules/recipes/recipes.module').then(m => m.RecipesModule) },
   { path: 'profile', loadChildren: () => import('./modules/profile/user.module').then(m => m.UserModule) },
   /*
-  
   { path: 'admin', loadChildren: () => import('./modules/admin/admin.module').then(m => m.AdminModule) },
-
-
   */
 ];
 

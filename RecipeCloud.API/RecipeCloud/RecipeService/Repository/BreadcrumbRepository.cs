@@ -2,24 +2,32 @@
 using RecipeService.Data;
 using RecipeService.Models.Breadcrumbs;
 using System.Linq.Expressions;
-using System.Linq;
+using System.Threading;
 
 namespace RecipeService.Repository
 {
     public class BreadcrumbRepository : IBreadcrumbRepository
     {
         private readonly ApplicationDbContext _db;
+
         public BreadcrumbRepository(ApplicationDbContext db)
         {
+            ArgumentNullException.ThrowIfNull(db);
+
             _db = db;
         }
-        public async Task CreateAsync(BreadcrumbItem entity)
+
+        public async Task CreateAsync(BreadcrumbItem entity, CancellationToken cancellationToken = default)
         {
-            await _db.Breadcrumbs.AddAsync(entity);
-            await SaveAsync();
+            ArgumentNullException.ThrowIfNull(entity);
+
+            await _db.Breadcrumbs.AddAsync(entity, cancellationToken);
+            await SaveAsync(cancellationToken);
         }
 
-        public async Task<List<BreadcrumbItem>> GetAllAsync(Expression<Func<BreadcrumbItem, bool>>? filter = null)
+        public async Task<List<BreadcrumbItem>> GetAllAsync(
+            Expression<Func<BreadcrumbItem, bool>>? filter = null,
+            CancellationToken cancellationToken = default)
         {
             IQueryable<BreadcrumbItem> query = _db.Breadcrumbs;
 
@@ -27,15 +35,18 @@ namespace RecipeService.Repository
             {
                 query = query.Where(filter);
             }
-            return await query.ToListAsync();
+
+            return await query.ToListAsync(cancellationToken);
         }
 
-        public async Task<BreadcrumbItem> GetAsync(Expression<Func<BreadcrumbItem, bool>> filter = null, bool tracked = true)
+        public async Task<BreadcrumbItem?> GetAsync(
+            Expression<Func<BreadcrumbItem, bool>>? filter = null,
+            bool isTracked = true,
+            CancellationToken cancellationToken = default)
         {
             IQueryable<BreadcrumbItem> query = _db.Breadcrumbs;
 
-
-            if (!tracked)
+            if (!isTracked)
             {
                 query = query.AsNoTracking();
             }
@@ -45,24 +56,26 @@ namespace RecipeService.Repository
                 query = query.Where(filter);
             }
 
-            return await query.FirstOrDefaultAsync();
+            return await query.FirstOrDefaultAsync(cancellationToken);
         }
 
-        public async Task RemoveAsync(BreadcrumbItem entity)
+        public async Task RemoveAsync(BreadcrumbItem entity, CancellationToken cancellationToken = default)
         {
+            ArgumentNullException.ThrowIfNull(entity);
+
             _db.Breadcrumbs.Remove(entity);
-            await SaveAsync();
+            await SaveAsync(cancellationToken);
         }
 
-        public async Task SaveAsync()
-        {
-            await _db.SaveChangesAsync();
-        }
+        public Task SaveAsync(CancellationToken cancellationToken = default) =>
+            _db.SaveChangesAsync(cancellationToken);
 
-        public async Task<BreadcrumbItem> UpdateAsync(BreadcrumbItem entity)
+        public async Task<BreadcrumbItem> UpdateAsync(BreadcrumbItem entity, CancellationToken cancellationToken = default)
         {
+            ArgumentNullException.ThrowIfNull(entity);
+
             _db.Breadcrumbs.Update(entity);
-            await SaveAsync();
+            await SaveAsync(cancellationToken);
             return entity;
         }
     }

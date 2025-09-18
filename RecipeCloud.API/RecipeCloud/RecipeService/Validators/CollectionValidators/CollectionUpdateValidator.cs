@@ -1,12 +1,15 @@
 ﻿using FluentValidation;
 using RecipeService.Models.Collections.DTOs;
 
-namespace RecipeService.Validators
+namespace RecipeService.Validators.CollectionValidators
 {
-    public class CollectionCreateValidator : AbstractValidator<CollectionCreateDTO>
+    public class CollectionUpdateValidator : AbstractValidator<CollectionUpdateDTO>
     {
-        public CollectionCreateValidator()
+        public CollectionUpdateValidator()
         {
+            RuleFor(x => x.Id)
+                .NotEmpty().WithMessage("Id is required");
+
             RuleFor(x => x.Title)
                 .NotEmpty().WithMessage("Title is required")
                 .Length(3, 100).WithMessage("Title must be between 3 and 100 characters");
